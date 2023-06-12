@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.InvalidValueException;
@@ -12,8 +13,9 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
-    private final UserRepository repository = new UserRepository();
+    private final UserRepository repository;
 
     @GetMapping
     public List<User> getUsers() {
@@ -39,17 +41,4 @@ public class UserController {
         log.info("Окончание обработки запроса на обновление пользователя");
         return existingUser;
     }
-
-    /*private void validateUser(User user) {
-        if (user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
-            throw new InvalidValueException("Некорректный адрес электронной почты: '" + user.getEmail() + "'");
-        }
-        if (user.getLogin().isEmpty() || user.getLogin().contains(" ")) {
-            throw new InvalidValueException("Некорректный логин пользователя: '" + user.getLogin() + "'");
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            throw new InvalidValueException("День рождения пользователя не может быть в будущем: '" + user.getBirthday()
-                    + "'");
-        }
-    }*/
 }

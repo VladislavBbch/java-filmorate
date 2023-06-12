@@ -12,14 +12,11 @@ import java.time.LocalDate;
 public class Film {
     private static final int MAX_DESCRIPTION_LENGTH = 200;
     private final int id;
-    @NotNull
     @NotBlank
     private String name;
     @NotNull
     @Size(max = MAX_DESCRIPTION_LENGTH)
     private String description;
-    @NotNull
-    @Past
     @FilmReleaseDate
     private LocalDate releaseDate;
     @Positive

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.validation.*;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Пользователь должен:")
 public class UserTest {
     private Set<ConstraintViolation<User>> validates;
-    private boolean isValidationFailed;
+    private ConstraintViolation<User> validate;
     private User user;
     private static final Validator validator;
 
@@ -28,57 +29,49 @@ public class UserTest {
         user = new User(1, null, "Login", "Name", LocalDate.parse("1990-12-24"));
 
         validates = validator.validate(user);
-        isValidationFailed = false;
-        for (ConstraintViolation<User> validate : validates) {
-            if (validate.getMessageTemplate().equals("{javax.validation.constraints.NotNull.message}")) {
-                isValidationFailed = true;
-                break;
-            }
-        }
-        assertTrue(isValidationFailed, "валидация на null");
+        validate = validates.iterator().next();
+        assertEquals(NotEmpty.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");
+        assertEquals("email", validate.getPropertyPath().toString(), "валидация на null, property");
+
+        user = new User(1, "", "Login", "Name", LocalDate.parse("1990-12-24"));
+        validates = validator.validate(user);
+        validate = validates.iterator().next();
+        assertEquals(NotEmpty.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на empty");
+        assertEquals("email", validate.getPropertyPath().toString(), "валидация на empty, property");
 
         user = new User(1, "test.ru", "Login", "Name", LocalDate.parse("1990-12-24"));
         validates = validator.validate(user);
-        isValidationFailed = false;
-        for (ConstraintViolation<User> validate : validates) {
-            if (validate.getMessageTemplate().equals("{javax.validation.constraints.Email.message}")) {
-                isValidationFailed = true;
-                break;
-            }
-        }
-        assertTrue(isValidationFailed, "не совпадает формат адреса электронной почты");
+        validate = validates.iterator().next();
+        assertEquals(Email.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "не совпадает формат адреса электронной почты");
+        assertEquals("email", validate.getPropertyPath().toString(), "вне совпадает формат адреса электронной почты, property");
     }
 
     @DisplayName("валидировать логин")
     @Test
     public void shouldValidateLogin() {
         user = new User(1, "test@test.ru", null, "Name", LocalDate.parse("1990-12-24"));
+        validates = validator.validate(user);
+        validate = validates.iterator().next();
+        assertEquals(NotNull.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");
+        assertEquals("login", validate.getPropertyPath().toString(), "валидация на null, property");
 
-        final ValidationException e = assertThrows(ValidationException.class,
-                () -> validator.validate(user));
-        assertEquals(e.getMessage(), "HV000028: Unexpected exception during isValid call.", "валидация на null");
+        user = new User(1, "test@test.ru", "", "Name", LocalDate.parse("1990-12-24"));
+        validates = validator.validate(user);
+        validate = validates.iterator().next();
+        assertEquals(Pattern.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на empty");
+        assertEquals("login", validate.getPropertyPath().toString(), "валидация на empty, property");
 
         user = new User(1, "test@test.ru", " ", "Name", LocalDate.parse("1990-12-24"));
         validates = validator.validate(user);
-        isValidationFailed = false;
-        for (ConstraintViolation<User> validate : validates) {
-            if (validate.getMessageTemplate().equals("{javax.validation.constraints.NotBlank.message}")) {
-                isValidationFailed = true;
-                break;
-            }
-        }
-        assertTrue(isValidationFailed, "валидация на blank");
+        validate = validates.iterator().next();
+        assertEquals(Pattern.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на blank");
+        assertEquals("login", validate.getPropertyPath().toString(), "валидация на blank, property");
 
         user = new User(1, "test@test.ru", "Login with spaces", "Name", LocalDate.parse("1990-12-24"));
         validates = validator.validate(user);
-        isValidationFailed = false;
-        for (ConstraintViolation<User> validate : validates) {
-            if (validate.getMessageTemplate().equals("Логин пользователя содержит пробелы")) {
-                isValidationFailed = true;
-                break;
-            }
-        }
-        assertTrue(isValidationFailed, "содержит пробелы");
+        validate = validates.iterator().next();
+        assertEquals(Pattern.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "содержит пробелы");
+        assertEquals("login", validate.getPropertyPath().toString(), "содержит пробелы, property");
     }
 
     @DisplayName("валидировать дату рождения")
@@ -87,24 +80,14 @@ public class UserTest {
         user = new User(1, "test@test.ru", "Login", "Name", null);
 
         validates = validator.validate(user);
-        isValidationFailed = false;
-        for (ConstraintViolation<User> validate : validates) {
-            if (validate.getMessageTemplate().equals("{javax.validation.constraints.NotNull.message}")) {
-                isValidationFailed = true;
-                break;
-            }
-        }
-        assertTrue(isValidationFailed, "валидация на null");
+        validate = validates.iterator().next();
+        assertEquals(NotNull.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");
+        assertEquals("birthday", validate.getPropertyPath().toString(), "валидация на null, property");
 
         user = new User(1, "test@test.ru", "Login", "Name", LocalDate.parse("2100-12-24"));
         validates = validator.validate(user);
-        isValidationFailed = false;
-        for (ConstraintViolation<User> validate : validates) {
-            if (validate.getMessageTemplate().equals("{javax.validation.constraints.Past.message}")) {
-                isValidationFailed = true;
-                break;
-            }
-        }
-        assertTrue(isValidationFailed, "будущая дата");
+        validate = validates.iterator().next();
+        assertEquals(PastOrPresent.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "будущая дата");
+        assertEquals("birthday", validate.getPropertyPath().toString(), "будущая дата, property");
     }
 }

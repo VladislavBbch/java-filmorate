@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.repository;
 
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.InvalidValueException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -7,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Repository
 public class UserRepository {
     private final Map<Integer, User> users = new HashMap<>();
     private int nextUserId = 1;
