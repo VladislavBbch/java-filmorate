@@ -26,46 +26,32 @@ public class UserService {
     }
 
     public User getUserById(Long userId) {
-        if (userId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
+        checkId(userId);
         return userRepository.getById(userId);
     }
 
     public User updateUser(User user) {
-        if (user.getId() <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + user.getId());
-        }
+        checkId(user.getId());
         checkUserName(user);
         return userRepository.update(user);
     }
 
     public void addFriend(Long userId, Long friendId) {
-        if (userId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
-        if (friendId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
+        checkId(userId);
+        checkId(friendId);
         userRepository.getById(userId).getFriends().add(friendId);
         userRepository.getById(friendId).getFriends().add(userId);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
-        if (userId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
-        if (friendId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
+        checkId(userId);
+        checkId(friendId);
         userRepository.getById(userId).getFriends().remove(friendId);
         userRepository.getById(friendId).getFriends().remove(userId);
     }
 
     public List<User> getUserFriends(Long userId) { //list<user>
-        if (userId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
+        checkId(userId);
         List<User> result = new ArrayList<>();
         for (Long id : userRepository.getById(userId).getFriends()) {
             result.add(userRepository.getById(id));
@@ -74,12 +60,8 @@ public class UserService {
     }
 
     public List<User> getCommonFriends(Long userId, Long friendId) {
-        if (userId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
-        if (friendId <= 0) {
-            throw new InvalidValueException("Некорректный id пользователя: " + userId);
-        }
+        checkId(userId);
+        checkId(friendId);
         Set<Long> firstUserFriends = new HashSet<>(userRepository.getById(userId).getFriends());
         Set<Long> secondUserFriends = userRepository.getById(friendId).getFriends();
         firstUserFriends.retainAll(secondUserFriends);
@@ -93,6 +75,12 @@ public class UserService {
     private void checkUserName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
+        }
+    }
+
+    private void checkId(Long id) {
+        if (id <= 0) {
+            throw new InvalidValueException("Некорректный id: " + id);
         }
     }
 }
