@@ -1,40 +1,46 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.InvalidValueException;
+import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 @Repository
-public class UserRepository {
-    private final Map<Integer, User> users = new HashMap<>();
-    private int nextUserId = 1;
+public class InMemoryUserRepository implements CrudRepository<User> {
+    private final Map<Long, User> users = new HashMap<>();
+    private Long nextUserId = 1L;
 
+    public Map<Long, User> getUsers() {
+        return users;
+    }
+
+    @Override
     public User create(User user) {
-        checkUserName(user);
         User newUser = user
                 .toBuilder()
                 .id(nextUserId++)
+                .friends(new HashSet<>())
                 .build();
 
         users.put(newUser.getId(), newUser);
         return newUser;
     }
 
+    @Override
     public List<User> read() {
         return List.copyOf(users.values());
     }
 
+    @Override
     public User update(User user) {
         User existingUser = users.get(user.getId());
         if (existingUser == null) {
-            throw new InvalidValueException("Несуществующий id пользователя");
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + user.getId());
         }
-        checkUserName(user);
-
         existingUser.setEmail(user.getEmail());
         existingUser.setLogin(user.getLogin());
         existingUser.setName(user.getName());
@@ -42,9 +48,12 @@ public class UserRepository {
         return existingUser;
     }
 
-    private void checkUserName(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
+    @Override
+    public User getById(Long id) {
+        User user = users.get(id);
+        if (user == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + id);
         }
+        return user;
     }
 }
