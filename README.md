@@ -1,2 +1,4 @@
 # java-filmorate
-Template repository for Filmorate project.
+Мини социальная сеть с картотекой фильмов
+
+![DB schema](/DBSchema.png?raw=true "Title")
