@@ -5,19 +5,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @JdbcTest
-@Import(DatabaseGenreRepository.class)
+@Import({DatabaseGenreRepository.class, DatabaseFilmRepository.class})
 @DisplayName("Хранилище жанров в базе данных должно:")
 public class DatabaseGenreRepositoryTest {
     @Autowired
     private DatabaseGenreRepository genreRepository;
+    @Autowired
+    private DatabaseFilmRepository filmRepository;
+
 
     @DisplayName("возвращать все значения")
     @Test
@@ -79,4 +84,41 @@ public class DatabaseGenreRepositoryTest {
         assertEquals(3L, genre.getId(), "идентификатор3");
         assertEquals("Мультфильм", genre.getName(), "название3");
     }
+
+    @DisplayName("возвращать жанры фильма")
+    @Test
+    public void shouldGetFilmGenres() {
+        List<Genre> genres = new ArrayList<>(genreRepository.getFilmGenres(1L));
+        assertNotNull(genres);
+        assertEquals(2, genres.size());
+        Genre genre = genres.get(0);
+        assertNotNull(genre);
+        assertEquals(1L, genre.getId(), "идентификатор1");
+        assertEquals("Комедия", genre.getName(), "название1");
+        genre = genres.get(1);
+        assertNotNull(genre);
+        assertEquals(2L, genre.getId(), "идентификатор2");
+        assertEquals("Драма", genre.getName(), "название2");
+    }
+
+    @DisplayName("обогащать каждый фильм из списка его жанрами")
+    @Test
+    public void shouldEnrichFilmsByGenres() {
+        List<Film> films = filmRepository.read();
+        List<Film> filmsWithGenres = genreRepository.enrichFilmsByGenres(films);
+        assertNotNull(filmsWithGenres);
+        assertEquals(6, filmsWithGenres.size());
+        List<Genre> genres = new ArrayList<>(filmsWithGenres.get(0).getGenres());
+        assertNotNull(genres);
+        assertEquals(2, genres.size());
+        Genre genre = genres.get(0);
+        assertNotNull(genre);
+        assertEquals(1L, genre.getId(), "идентификатор1");
+        assertEquals("Комедия", genre.getName(), "название1");
+        genre = genres.get(1);
+        assertNotNull(genre);
+        assertEquals(2L, genre.getId(), "идентификатор2");
+        assertEquals("Драма", genre.getName(), "название2");
+    }
+
 }

@@ -19,12 +19,18 @@ public class RatingMpaController {
     private final RatingMpaService ratingMpaService;
 
     @GetMapping
-    public List<RatingMpa> getMpa() {
-        return ratingMpaService.getAllRatingMpa();
+    public List<RatingMpa> getAllRatingMpa() {
+        log.info("Начало обработки запроса на получение всех значений рейтинга MPA");
+        List<RatingMpa> ratings = ratingMpaService.getAllRatingMpa();
+        log.info("Окончание обработки запроса на получение всех значений рейтинга MPA");
+        return ratings;
     }
 
     @GetMapping("/{id}")
-    public RatingMpa getMpaById(@PathVariable Long id) {
-        return ratingMpaService.getRatingMpaById(id);
+    public RatingMpa getRatingMpaById(@PathVariable Long id) {
+        log.info("Начало обработки запроса на получение значения рейтинга MPA по id: {}", id);
+        RatingMpa ratingMpa = ratingMpaService.getRatingMpaById(id);
+        log.info("Окончание обработки запроса на получение значения рейтинга MPA по id: {}", id);
+        return ratingMpa;
     }
 }

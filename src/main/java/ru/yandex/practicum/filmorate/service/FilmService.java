@@ -5,10 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.repository.DatabaseGenreRepository;
-import ru.yandex.practicum.filmorate.repository.DatabaseRatingMpaRepository;
-import ru.yandex.practicum.filmorate.repository.FilmRepository;
-import ru.yandex.practicum.filmorate.repository.UserRepository;
+import ru.yandex.practicum.filmorate.repository.*;
 
 import java.util.List;
 import java.util.Set;
@@ -21,9 +18,10 @@ public class FilmService {
     private final UserRepository userRepository;
     private final DatabaseRatingMpaRepository ratingMpaRepository;
     private final DatabaseGenreRepository genreRepository;
+    private final LikeRepository likeRepository;
 
     public List<Film> getFilms() {
-        return filmRepository.read();
+        return genreRepository.enrichFilmsByGenres(filmRepository.read());
     }
 
     public Film getFilmById(Long filmId) {
@@ -31,20 +29,28 @@ public class FilmService {
         if (film == null) {
             throw new ObjectNotFoundException("Несуществующий id фильма: " + filmId);
         }
+        film.setGenres(genreRepository.getFilmGenres(filmId));
         return film;
     }
 
     public Film createFilm(Film film) {
         checkRatingMpa(film.getRatingMpa().getId());
         checkGenres(film.getGenres());
-        return filmRepository.create(film);
+        Film createdFilm = filmRepository.create(film);
+        genreRepository.addFilmGenres(createdFilm);
+        createdFilm.setGenres(genreRepository.getFilmGenres(createdFilm.getId()));
+        return createdFilm;
     }
 
     public Film updateFilm(Film film) {
         getFilmById(film.getId());
         checkRatingMpa(film.getRatingMpa().getId());
         checkGenres(film.getGenres());
-        return filmRepository.update(film);
+        Film updatedFilm = filmRepository.update(film);
+        genreRepository.deleteFilmGenres(updatedFilm.getId());
+        genreRepository.addFilmGenres(updatedFilm);
+        updatedFilm.setGenres(genreRepository.getFilmGenres(updatedFilm.getId()));
+        return updatedFilm;
     }
 
     public void addLike(Long filmId, Long userId) {
@@ -52,7 +58,7 @@ public class FilmService {
         if (userRepository.getById(userId) == null) {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
         }
-        filmRepository.addLike(filmId, userId);
+        likeRepository.addLike(filmId, userId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -60,11 +66,11 @@ public class FilmService {
         if (userRepository.getById(userId) == null) {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
         }
-        filmRepository.deleteLike(filmId, userId);
+        likeRepository.deleteLike(filmId, userId);
     }
 
     public List<Film> getMostPopularFilms(Integer count) {
-        return filmRepository.getMostPopularFilms(count);
+        return genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count));
     }
 
     private void checkRatingMpa(Long id) {

@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,15 +35,6 @@ public class DatabaseFilmRepositoryTest {
         assertEquals(LocalDate.parse("2001-05-05"), film.getReleaseDate(), "дата релиза");
         assertEquals(120, film.getDuration(), "продолжительность");
         assertEquals(1L, film.getRatingMpa().getId(), "рейтинг");
-        List<Genre> genres = new ArrayList<>(film.getGenres());
-        assertNotNull(genres);
-        assertEquals(2, genres.size(), "жанры");
-        Genre genre = genres.get(0);
-        assertEquals(1L, genre.getId(), "идентификатор жанра1");
-        assertEquals("Комедия", genre.getName(), "название жанра1");
-        genre = genres.get(1);
-        assertEquals(2L, genre.getId(), "идентификатор жанра2");
-        assertEquals("Драма", genre.getName(), "название жанра2");
     }
 
     @DisplayName("создавать")
@@ -65,15 +55,6 @@ public class DatabaseFilmRepositoryTest {
         assertEquals(LocalDate.parse("2007-05-05"), film.getReleaseDate(), "дата релиза");
         assertEquals(130, film.getDuration(), "продолжительность");
         assertEquals(3L, film.getRatingMpa().getId(), "рейтинг");
-        List<Genre> genres = new ArrayList<>(film.getGenres());
-        assertNotNull(genres);
-        assertEquals(2, genres.size(), "жанры");
-        Genre genre = genres.get(0);
-        assertEquals(4L, genre.getId(), "идентификатор жанра1");
-        assertEquals("Триллер", genre.getName(), "название жанра1");
-        genre = genres.get(1);
-        assertEquals(3L, genre.getId(), "идентификатор жанра2");
-        assertEquals("Мультфильм", genre.getName(), "название жанра2");
     }
 
     @DisplayName("возвращать всех")
@@ -121,15 +102,6 @@ public class DatabaseFilmRepositoryTest {
         assertEquals(LocalDate.parse("2008-05-05"), film.getReleaseDate(), "дата релиза");
         assertEquals(140, film.getDuration(), "продолжительность");
         assertEquals(4L, film.getRatingMpa().getId(), "рейтинг");
-        List<Genre> genres = new ArrayList<>(film.getGenres());
-        assertNotNull(genres);
-        assertEquals(2, genres.size(), "жанры");
-        Genre genre = genres.get(0);
-        assertEquals(6L, genre.getId(), "идентификатор жанра1");
-        assertEquals("Боевик", genre.getName(), "название жанра1");
-        genre = genres.get(1);
-        assertEquals(5L, genre.getId(), "идентификатор жанра2");
-        assertEquals("Документальный", genre.getName(), "название жанра2");
     }
 
     @DisplayName("возвращать популярные фильмы")

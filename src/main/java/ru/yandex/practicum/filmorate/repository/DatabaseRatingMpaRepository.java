@@ -22,7 +22,7 @@ public class DatabaseRatingMpaRepository {
         List<RatingMpa> ratings = new ArrayList<>();
         SqlRowSet ratingMpaRow = jdbcTemplate.queryForRowSet("SELECT * FROM RATINGS");
         while (ratingMpaRow.next()) {
-            ratings.add(new RatingMpa(ratingMpaRow.getLong("ID"), ratingMpaRow.getString("NAME")));
+            ratings.add(mapRowToRatingMpa(ratingMpaRow));
         }
         return ratings;
     }
@@ -32,8 +32,12 @@ public class DatabaseRatingMpaRepository {
         SqlRowSet ratingMpaRow = parameterJdbcTemplate.queryForRowSet(
                 "SELECT * FROM RATINGS WHERE ID = :id", Map.of("id", id));
         if (ratingMpaRow.next()) {
-            return new RatingMpa(ratingMpaRow.getLong("ID"), ratingMpaRow.getString("NAME"));
+            return mapRowToRatingMpa(ratingMpaRow);
         }
         return null;
+    }
+
+    private RatingMpa mapRowToRatingMpa(SqlRowSet ratingMpaRow) {
+        return new RatingMpa(ratingMpaRow.getLong("ID"), ratingMpaRow.getString("NAME"));
     }
 }
