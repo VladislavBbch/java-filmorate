@@ -2,62 +2,94 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.InvalidValueException;
+import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.repository.CrudRepository;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.repository.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    private final CrudRepository<Film> filmRepository;
+    private final FilmRepository filmRepository;
+    private final UserRepository userRepository;
+    private final DatabaseRatingMpaRepository ratingMpaRepository;
+    private final DatabaseGenreRepository genreRepository;
+    private final LikeRepository likeRepository;
 
     public List<Film> getFilms() {
-        return filmRepository.read();
+        return genreRepository.enrichFilmsByGenres(filmRepository.read());
     }
 
     public Film getFilmById(Long filmId) {
-        checkId(filmId);
-        return filmRepository.getById(filmId);
+        Film film = filmRepository.getById(filmId);
+        if (film == null) {
+            throw new ObjectNotFoundException("Несуществующий id фильма: " + filmId);
+        }
+        film.setGenres(genreRepository.getFilmGenres(filmId));
+        return film;
     }
 
     public Film createFilm(Film film) {
-        return filmRepository.create(film);
+        checkRatingMpa(film.getRatingMpa().getId());
+        checkGenres(film.getGenres());
+        Film createdFilm = filmRepository.create(film);
+        genreRepository.addFilmGenres(createdFilm);
+        createdFilm.setGenres(genreRepository.getFilmGenres(createdFilm.getId()));
+        return createdFilm;
     }
 
     public Film updateFilm(Film film) {
-        checkId(film.getId());
-        return filmRepository.update(film);
+        getFilmById(film.getId());
+        checkRatingMpa(film.getRatingMpa().getId());
+        checkGenres(film.getGenres());
+        Film updatedFilm = filmRepository.update(film);
+        genreRepository.deleteFilmGenres(updatedFilm.getId());
+        genreRepository.addFilmGenres(updatedFilm);
+        updatedFilm.setGenres(genreRepository.getFilmGenres(updatedFilm.getId()));
+        return updatedFilm;
     }
 
     public void addLike(Long filmId, Long userId) {
-        checkId(filmId);
-        checkId(userId);
-        Film film = filmRepository.getById(filmId);
-        film.getLikedUsers().add(userId);
-        film.setLikeCount(film.getLikeCount() + 1);
+        getFilmById(filmId);
+        if (userRepository.getById(userId) == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
+        }
+        likeRepository.addLike(filmId, userId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        checkId(filmId);
-        checkId(userId);
-        Film film = filmRepository.getById(filmId);
-        film.getLikedUsers().remove(userId);
-        film.setLikeCount(film.getLikeCount() - 1);
+        getFilmById(filmId);
+        if (userRepository.getById(userId) == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
+        }
+        likeRepository.deleteLike(filmId, userId);
     }
 
     public List<Film> getMostPopularFilms(Integer count) {
-        return filmRepository.read().stream()
-                .sorted((f1, f2) -> f2.getLikeCount() - f1.getLikeCount())
-                .limit(count)
-                .collect(Collectors.toList());
+        return genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count));
     }
 
-    private void checkId(Long id) {
-        if (id <= 0) {
-            throw new InvalidValueException("Некорректный id: " + id);
+    private void checkRatingMpa(Long id) {
+        if (ratingMpaRepository.getById(id) == null) {
+            throw new ObjectNotFoundException("Несуществующий id жанра: " + id);
         }
     }
+
+    private void checkGenres(Set<Genre> genres) {
+        if (genres == null || genres.size() == 0) {
+            return;
+        }
+        List<Long> genreIds = genres.stream()
+                .map(Genre::getId)
+                .collect(Collectors.toList());
+        List<Genre> existingGenres = genreRepository.getByIds(genreIds);
+        if (existingGenres == null || existingGenres.size() != genres.size()) {
+            throw new ObjectNotFoundException("Найден несуществующий id жанра в списке: " + genreIds);
+        }
+    }
+
 }

@@ -2,19 +2,18 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.InvalidValueException;
+import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.repository.CrudRepository;
+import ru.yandex.practicum.filmorate.repository.FriendRepository;
+import ru.yandex.practicum.filmorate.repository.UserRepository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final CrudRepository<User> userRepository;
+    private final UserRepository userRepository;
+    private final FriendRepository friendRepository;
 
     public User createUser(User user) {
         checkUserName(user);
@@ -26,50 +25,40 @@ public class UserService {
     }
 
     public User getUserById(Long userId) {
-        checkId(userId);
-        return userRepository.getById(userId);
+        User user = userRepository.getById(userId);
+        if (user == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
+        }
+        return user;
     }
 
     public User updateUser(User user) {
-        checkId(user.getId());
         checkUserName(user);
+        getUserById(user.getId());
         return userRepository.update(user);
     }
 
     public void addFriend(Long userId, Long friendId) {
-        checkId(userId);
-        checkId(friendId);
-        userRepository.getById(userId).getFriends().add(friendId);
-        userRepository.getById(friendId).getFriends().add(userId);
+        getUserById(userId);
+        getUserById(friendId);
+        friendRepository.addFriend(userId, friendId);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
-        checkId(userId);
-        checkId(friendId);
-        userRepository.getById(userId).getFriends().remove(friendId);
-        userRepository.getById(friendId).getFriends().remove(userId);
+        getUserById(userId);
+        getUserById(friendId);
+        friendRepository.deleteFriend(userId, friendId);
     }
 
-    public List<User> getUserFriends(Long userId) { //list<user>
-        checkId(userId);
-        List<User> result = new ArrayList<>();
-        for (Long id : userRepository.getById(userId).getFriends()) {
-            result.add(userRepository.getById(id));
-        }
-        return result;
+    public List<User> getUserFriends(Long userId) {
+        getUserById(userId);
+        return friendRepository.getUserFriends(userId);
     }
 
     public List<User> getCommonFriends(Long userId, Long friendId) {
-        checkId(userId);
-        checkId(friendId);
-        Set<Long> firstUserFriends = new HashSet<>(userRepository.getById(userId).getFriends());
-        Set<Long> secondUserFriends = userRepository.getById(friendId).getFriends();
-        firstUserFriends.retainAll(secondUserFriends);
-        List<User> result = new ArrayList<>();
-        for (Long id : firstUserFriends) {
-            result.add(userRepository.getById(id));
-        }
-        return result;
+        getUserById(userId);
+        getUserById(friendId);
+        return friendRepository.getCommonFriends(userId, friendId);
     }
 
     private void checkUserName(User user) {
@@ -78,9 +67,4 @@ public class UserService {
         }
     }
 
-    private void checkId(Long id) {
-        if (id <= 0) {
-            throw new InvalidValueException("Некорректный id: " + id);
-        }
-    }
 }

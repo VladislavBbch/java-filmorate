@@ -10,7 +10,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @Slf4j
-@RestControllerAdvice
+@RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
