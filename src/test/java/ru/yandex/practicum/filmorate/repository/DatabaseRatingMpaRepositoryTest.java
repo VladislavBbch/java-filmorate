@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("Хранилище значений рейтинга MPA в базе данных должно:")
 public class DatabaseRatingMpaRepositoryTest {
     @Autowired
-    private DatabaseRatingMpaRepository ratingMpaRepository;
+    private RatingMpaRepository ratingMpaRepository;
 
     @DisplayName("возвращать по id")
     @Test

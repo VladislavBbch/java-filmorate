@@ -19,10 +19,11 @@ import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
-public class DatabaseGenreRepository {
+public class DatabaseGenreRepository implements GenreRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
 
+    @Override
     public List<Genre> read() {
         List<Genre> genres = new ArrayList<>();
         SqlRowSet genreRow = jdbcTemplate.queryForRowSet("SELECT * FROM GENRES");
@@ -32,6 +33,7 @@ public class DatabaseGenreRepository {
         return genres;
     }
 
+    @Override
     @Nullable
     public Genre getById(Long id) {
         SqlRowSet genreRow = parameterJdbcTemplate.queryForRowSet("SELECT * FROM GENRES WHERE ID = :id", Map.of("id", id));
@@ -41,6 +43,7 @@ public class DatabaseGenreRepository {
         return null;
     }
 
+    @Override
     @Nullable
     public List<Genre> getByIds(List<Long> ids) {
         List<Genre> genres = new ArrayList<>();
@@ -52,6 +55,7 @@ public class DatabaseGenreRepository {
         return genres;
     }
 
+    @Override
     public void addFilmGenres(Film film) {
         if (film.getGenres() == null || film.getGenres().size() == 0) {
             return;
@@ -70,10 +74,12 @@ public class DatabaseGenreRepository {
                 });
     }
 
+    @Override
     public void deleteFilmGenres(Long filmId) {
         parameterJdbcTemplate.update("DELETE FROM FILMS_GENRES WHERE FILM_ID = :id", Map.of("id", filmId));
     }
 
+    @Override
     public Set<Genre> getFilmGenres(Long filmId) {
         Set<Genre> genres = new HashSet<>();
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
@@ -87,6 +93,7 @@ public class DatabaseGenreRepository {
         return genres;
     }
 
+    @Override
     public List<Film> enrichFilmsByGenres(List<Film> films) {
         if (films == null || films.size() == 0) {
             return films;
@@ -112,9 +119,10 @@ public class DatabaseGenreRepository {
                 genres.add(new Genre(filmRow.getLong("GENRE_ID"), filmRow.getString("GENRE_NAME")));
                 film.setGenres(genres);
             } while (filmRow.next());
-            return new ArrayList<>(filmsMap.values());
-        } else {
-            for (Film film : films) {
+            films = new ArrayList<>(filmsMap.values());
+        }
+        for (Film film : films) {
+            if (film.getGenres() == null) {
                 film.setGenres(new HashSet<>());
             }
         }

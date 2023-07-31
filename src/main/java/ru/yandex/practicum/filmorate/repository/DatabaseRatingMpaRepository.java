@@ -14,10 +14,11 @@ import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
-public class DatabaseRatingMpaRepository {
+public class DatabaseRatingMpaRepository implements RatingMpaRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
 
+    @Override
     public List<RatingMpa> read() {
         List<RatingMpa> ratings = new ArrayList<>();
         SqlRowSet ratingMpaRow = jdbcTemplate.queryForRowSet("SELECT * FROM RATINGS");
@@ -27,6 +28,7 @@ public class DatabaseRatingMpaRepository {
         return ratings;
     }
 
+    @Override
     @Nullable
     public RatingMpa getById(Long id) {
         SqlRowSet ratingMpaRow = parameterJdbcTemplate.queryForRowSet(

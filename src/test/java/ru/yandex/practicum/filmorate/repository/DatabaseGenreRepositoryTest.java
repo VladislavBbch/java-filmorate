@@ -19,9 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("Хранилище жанров в базе данных должно:")
 public class DatabaseGenreRepositoryTest {
     @Autowired
-    private DatabaseGenreRepository genreRepository;
+    private GenreRepository genreRepository;
     @Autowired
-    private DatabaseFilmRepository filmRepository;
+    private FilmRepository filmRepository;
 
 
     @DisplayName("возвращать все значения")

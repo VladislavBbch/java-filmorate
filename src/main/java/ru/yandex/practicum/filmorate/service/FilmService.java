@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 public class FilmService {
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
-    private final DatabaseRatingMpaRepository ratingMpaRepository;
-    private final DatabaseGenreRepository genreRepository;
+    private final RatingMpaRepository ratingMpaRepository;
+    private final GenreRepository genreRepository;
     private final LikeRepository likeRepository;
 
     public List<Film> getFilms() {

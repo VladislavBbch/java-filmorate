@@ -4,14 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
-import ru.yandex.practicum.filmorate.repository.DatabaseRatingMpaRepository;
+import ru.yandex.practicum.filmorate.repository.RatingMpaRepository;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class RatingMpaService {
-    private final DatabaseRatingMpaRepository mpaRepository;
+    private final RatingMpaRepository mpaRepository;
 
     public List<RatingMpa> getAllRatingMpa() {
         return mpaRepository.read();
