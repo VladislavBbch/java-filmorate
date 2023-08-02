@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -70,5 +71,11 @@ public class FilmController {
     @GetMapping("/popular")
     public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count) {
         return filmService.getMostPopularFilms(count);
+    }
+
+    @GetMapping("director/{directorId}")
+    public Set<Film> getDirectorFilms(@PathVariable long directorId,
+                                      @RequestParam String sortBy) {
+        return filmService.getDirectorFilms(directorId, sortBy);
     }
 }
