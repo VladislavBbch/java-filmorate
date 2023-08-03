@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -14,7 +15,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,13 +66,6 @@ public class DatabaseReviewRepository implements ReviewRepository {
     @Override
     public Review update(Review review) {
         return save(review, false);
-    }
-
-    @Override
-    public List<Review> read() {
-        //Для задачи отзывов нет функционала чтения всех отзывов без ограничения, ставим заглушку
-        //TODO Можно внести изменения в CRUD - read(count)
-        return new ArrayList<>();
     }
 
     @Override

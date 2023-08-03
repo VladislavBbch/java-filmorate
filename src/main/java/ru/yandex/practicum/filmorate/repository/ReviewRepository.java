@@ -4,7 +4,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
 
-public interface ReviewRepository extends CrudRepository<Review> {
+public interface ReviewRepository {
 
     List<Review> getAllReviews(Integer count);
 
@@ -12,5 +12,11 @@ public interface ReviewRepository extends CrudRepository<Review> {
 
     int getUsefulnessReviewById(Long id);
 
+    Review create(Review review);
+
+    Review update(Review review);
+
     void delete(Long id);
+
+    Review getById(Long id);
 }

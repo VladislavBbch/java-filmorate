@@ -7,8 +7,8 @@ import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.repository.DatabaseReviewLikeRepository;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
+import ru.yandex.practicum.filmorate.repository.LikeRepository;
 import ru.yandex.practicum.filmorate.repository.ReviewRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
@@ -20,7 +20,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
-    private final DatabaseReviewLikeRepository likeRepository;
+    private final LikeRepository likeRepository;
 
     public List<Review> getReviews(Long filmId, Integer count) {
         if (filmId == null) {
@@ -42,10 +42,9 @@ public class ReviewService {
 
     public Review updateReview(Review review) {
         final Review findReview = findReviewById(review.getReviewId());
-        review.setUserId(findReview.getUserId());
-        review.setFilmId(findReview.getFilmId());
-        review.setUsefulness(findReview.getUsefulness());
-        return reviewRepository.update(review);
+        findReview.setContent(review.getContent());
+        findReview.setIsPositive(review.getIsPositive());
+        return reviewRepository.update(findReview);
     }
 
     public void deleteReviewById(Long id) {
