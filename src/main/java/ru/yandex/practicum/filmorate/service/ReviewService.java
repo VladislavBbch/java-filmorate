@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.repository.DatabaseReviewLikeRepository;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 import ru.yandex.practicum.filmorate.repository.ReviewRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
@@ -19,6 +20,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
+    private final DatabaseReviewLikeRepository likeRepository;
 
     public List<Review> getReviews(Long filmId, Integer count) {
         if (filmId == null) {
@@ -34,7 +36,7 @@ public class ReviewService {
 
     public Review createReview(Review review) {
         checkReview(review);
-        review.setUseful(0);
+        review.setUsefulness(0);
         return reviewRepository.create(review);
     }
 
@@ -42,26 +44,24 @@ public class ReviewService {
         final Review findReview = findReviewById(review.getReviewId());
         review.setUserId(findReview.getUserId());
         review.setFilmId(findReview.getFilmId());
-        controlUsefulForReview(review);
+        review.setUsefulness(findReview.getUsefulness());
         return reviewRepository.update(review);
     }
 
-    public Review deleteReviewById(Long id) {
-        Review review = findReviewById(id);
-        reviewRepository.deleteUsefulReviewById(id);
-        return reviewRepository.deleteReview(review);
+    public void deleteReviewById(Long id) {
+        reviewRepository.delete(id);
     }
 
     public void putLikeToReview(Long id, Long userId, boolean isLike) {
         final Review review = findReviewById(id);
-        reviewRepository.addLike(id, userId, isLike);
+        likeRepository.addLike(id, userId, isLike);
         controlUsefulForReview(review);
         reviewRepository.update(review);
     }
 
     public void deleteLikeToReview(Long id, Long userId, boolean isLike) {
         final Review review = findReviewById(id);
-        reviewRepository.deleteLike(id, userId, isLike);
+        likeRepository.deleteLike(id, userId, isLike);
         controlUsefulForReview(review);
         reviewRepository.update(review);
     }
@@ -87,6 +87,6 @@ public class ReviewService {
     }
 
     private void controlUsefulForReview(Review review) {
-        review.setUseful(reviewRepository.getUsefulReviewById(review.getReviewId()));
+        review.setUsefulness(reviewRepository.getUsefulnessReviewById(review.getReviewId()));
     }
 }

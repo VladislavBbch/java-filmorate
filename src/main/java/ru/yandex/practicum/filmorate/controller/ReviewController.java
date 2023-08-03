@@ -29,7 +29,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping
-    public List<Review> getAllRatingMpa(@RequestParam(required = false) Long filmId,
+    public List<Review> getReviews(@RequestParam(required = false) Long filmId,
                                         @Positive @RequestParam(required = false, defaultValue = "10") Integer count) {
         final String filmInfo = filmId == null ?  " " : " для фильма с id:" + filmId;
         log.info("Начало получения отзывов в количестве {} штук{}", count, filmInfo);
@@ -39,7 +39,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{id}")
-    public Review getRatingMpaById(@PathVariable Long id) {
+    public Review getReviewById(@PathVariable Long id) {
         log.info("Начало обработки запроса на получение значения отзыва по id: {}", id);
         Review review = reviewService.getReviewById(id);
         log.info("Окончание обработки запроса на получение значения отзыва по id: {}", id);
@@ -63,11 +63,10 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public Review deleteReview(@PathVariable Long id) {
+    public void deleteReview(@PathVariable Long id) {
         log.info("Начало обработки запроса на удаление отзыва по id: {}", id);
-        Review deleteReview = reviewService.deleteReviewById(id);
+        reviewService.deleteReviewById(id);
         log.info("Окончание обработки запроса на удаление отзыва");
-        return deleteReview;
     }
 
     @PutMapping("/{id}/like/{userId}")

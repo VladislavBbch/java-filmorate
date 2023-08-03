@@ -58,7 +58,7 @@ public class FilmService {
         if (userRepository.getById(userId) == null) {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
         }
-        likeRepository.addLike(filmId, userId);
+        likeRepository.addLike(filmId, userId, true);
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -66,7 +66,7 @@ public class FilmService {
         if (userRepository.getById(userId) == null) {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
         }
-        likeRepository.deleteLike(filmId, userId);
+        likeRepository.deleteLike(filmId, userId, true);
     }
 
     public List<Film> getMostPopularFilms(Integer count) {

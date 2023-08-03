@@ -25,34 +25,26 @@ import java.util.Objects;
 public class DatabaseReviewRepository implements ReviewRepository {
     private static final String SQL_QUERY_GET_REVIEW_BY_ID = "SELECT * FROM REVIEWS WHERE ID = :id";
     private static final String SQL_QUERY_CREATE_REVIEW = "INSERT INTO REVIEWS " +
-                                                          "(CONTENT, FILM_ID, USER_ID, IS_POSITIVE, USEFUL) " +
-                                                          "VALUES (:CONTENT, :FILM_ID, :USER_ID, :IS_POSITIVE, 0)";
+                                                          "(CONTENT, FILM_ID, USER_ID, IS_POSITIVE, USEFULNESS) " +
+                                                          "VALUES (:content, :filmId, :userId, :isPositive, 0)";
     private static final String SQL_QUERY_UPDATE_REVIEW = "UPDATE REVIEWS SET " +
-                                                          "CONTENT = :CONTENT, FILM_ID = :FILM_ID, " +
-                                                          "USER_ID = :USER_ID, IS_POSITIVE = :IS_POSITIVE, " +
-                                                          "USEFUL = :USEFUL WHERE ID = :id";
+                                                          "CONTENT = :content, IS_POSITIVE = :isPositive, " +
+                                                          "USEFULNESS = :usefulness WHERE ID = :id";
     private static final String SQL_QUERY_DELETE_REVIEW = "DELETE FROM REVIEWS WHERE ID = :id";
-    private static final String SQL_QUERY_DELETE_REVIEW_USEFUL = "DELETE FROM USEFUL_REVIEWS where REVIEW_ID = :id";
     private static final String SQL_QUERY_GET_ALL_REVIEWS = "SELECT * FROM REVIEWS " +
-                                                            "ORDER BY USEFUL DESC LIMIT :count";
+                                                            "ORDER BY USEFULNESS DESC LIMIT :count";
     private static final String SQL_QUERY_GET_ALL_REVIEWS_FOR_FILM_ID = "SELECT * FROM REVIEWS " +
                                                                         "WHERE FILM_ID = :filmId " +
-                                                                        "ORDER BY USEFUL DESC LIMIT :count";
-    private static final String SQL_QUERY_ADD_LIKE_REVIEW = "INSERT INTO USEFUL_REVIEWS " +
-                                                            "(REVIEW_ID, USER_ID, IS_USEFUL) " +
-                                                            "VALUES (:id, :userId, :isLike)";
-    private static final String SQL_QUERY_DELETE_LIKE_REVIEW = "DELETE FROM USEFUL_REVIEWS " +
-                                                               "WHERE ID = :id, USER_ID = :userId, " +
-                                                               "IS_USEFUL = :isLike)";
-
-    private static final String SQL_QUERY_GET_REVIEW_USEFUL = "SELECT SUM(TEMP.RESULT) as RESULT FROM " +
-                                                              "(SELECT count(USER_ID) AS RESULT FROM USEFUL_REVIEWS " +
-                                                              "WHERE REVIEW_ID = :id AND IS_USEFUL = TRUE " +
-                                                              "UNION ALL " +
-                                                              "SELECT -count(USER_ID) AS RESULT FROM USEFUL_REVIEWS " +
-                                                              "WHERE REVIEW_ID = :id AND IS_USEFUL = FALSE) AS TEMP";
+                                                                        "ORDER BY USEFULNESS DESC LIMIT :count";
+    private static final String SQL_QUERY_GET_REVIEW_USEFUL="SELECT SUM(TEMP.RESULT) AS RESULT FROM "+
+                                                            "(SELECT count(USER_ID) AS RESULT FROM REVIEWS_LIKES "+
+                                                            "WHERE REVIEW_ID = :id AND IS_USEFUL = TRUE "+
+                                                            "UNION ALL "+
+                                                            "SELECT -count(USER_ID) AS RESULT FROM REVIEWS_LIKES "+
+                                                            "WHERE REVIEW_ID = :id AND IS_USEFUL = FALSE) AS TEMP";
 
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
+
     private final ReviewRowMapper reviewMapper;
 
     @Override
@@ -79,23 +71,17 @@ public class DatabaseReviewRepository implements ReviewRepository {
     @Override
     public List<Review> read() {
         //Для задачи отзывов нет функционала чтения всех отзывов без ограничения, ставим заглушку
-        //Можно внести изменения в CRUD - read(count)
+        //TODO Можно внести изменения в CRUD - read(count)
         return new ArrayList<>();
     }
 
     @Override
-    public Review deleteReview(Review review) {
-        parameterJdbcTemplate.update(SQL_QUERY_DELETE_REVIEW, Map.of("id", review.getReviewId()));
-        return review;
+    public void delete(Long id) {
+        parameterJdbcTemplate.update(SQL_QUERY_DELETE_REVIEW, Map.of("id", id));
     }
 
     @Override
-    public void deleteUsefulReviewById(Long id) {
-        parameterJdbcTemplate.update(SQL_QUERY_DELETE_REVIEW_USEFUL, Map.of("id", id));
-    }
-
-    @Override
-    public int getUsefulReviewById(Long id) {
+    public int getUsefulnessReviewById(Long id) {
         final List<Integer> row = parameterJdbcTemplate.query(SQL_QUERY_GET_REVIEW_USEFUL, Map.of("id", id),
                                                                (rs, rowNum) -> rs.getInt("RESULT"));
         if (row.size() > 0) {
@@ -118,48 +104,37 @@ public class DatabaseReviewRepository implements ReviewRepository {
         return parameterJdbcTemplate.query(SQL_QUERY_GET_ALL_REVIEWS_FOR_FILM_ID, map, reviewMapper);
     }
 
-    @Override
-    public void addLike(Long id, Long userId, boolean isLike) {
-        MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("id", id);
-        map.addValue("userId", userId);
-        map.addValue("isLike", isLike);
-        parameterJdbcTemplate.update(SQL_QUERY_ADD_LIKE_REVIEW, map);
-    }
-
-    @Override
-    public void deleteLike(Long id, Long userId, boolean isLike) {
-        MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("id", id);
-        map.addValue("userId", userId);
-        map.addValue("isLike", isLike);
-        parameterJdbcTemplate.update(SQL_QUERY_DELETE_LIKE_REVIEW, map);
-    }
-
     private Review save(Review review, boolean isNew) {
         String sqlQuery;
 
         MapSqlParameterSource map = new MapSqlParameterSource();
-        map.addValue("CONTENT", review.getContent());
-        map.addValue("IS_POSITIVE", review.getIsPositive());
-        map.addValue("USER_ID", review.getUserId());
-        map.addValue("FILM_ID", review.getFilmId());
+        map.addValue("content", review.getContent());
+        map.addValue("isPositive", review.getIsPositive());
+        map.addValue("userId", review.getUserId());
+        map.addValue("filmId", review.getFilmId());
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         if (isNew) {
             sqlQuery = SQL_QUERY_CREATE_REVIEW;
+
         } else {
             sqlQuery = SQL_QUERY_UPDATE_REVIEW;
 
             map.addValue("id", review.getReviewId());
-            map.addValue("USEFUL", review.getUseful());
+            map.addValue("usefulness", review.getUsefulness());
         }
 
         parameterJdbcTemplate.update(sqlQuery, map, keyHolder);
-        review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
 
-        return review;
+        return Review.builder()
+                .reviewId(Objects.requireNonNull(keyHolder.getKey()).longValue())
+                .content(review.getContent())
+                .isPositive(review.getIsPositive())
+                .userId(review.getUserId())
+                .filmId(review.getFilmId())
+                .usefulness(review.getUsefulness())
+                .build();
     }
 
     @Component
@@ -172,7 +147,7 @@ public class DatabaseReviewRepository implements ReviewRepository {
                     .isPositive(reviewRow.getBoolean("IS_POSITIVE"))
                     .userId(reviewRow.getLong("USER_ID"))
                     .filmId(reviewRow.getLong("FILM_ID"))
-                    .useful(reviewRow.getInt("USEFUL"))
+                    .usefulness(reviewRow.getInt("USEFULNESS"))
                     .build();
         }
     }
