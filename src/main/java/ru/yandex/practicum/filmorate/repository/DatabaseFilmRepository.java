@@ -171,7 +171,6 @@ public class DatabaseFilmRepository implements FilmRepository {
     public List<Film> getDirectorFilms(long directorId, String sortBy) {
         final Set<Film> sortedByYear = new TreeSet<>(Comparator.comparing(Film::getReleaseDate));
         final List<Film> sortedByLikes = new ArrayList<>();
-
         switch (sortBy) {
             case ("year"):
                 SqlRowSet rowSet = jdbcTemplate.queryForRowSet(SQL_QUERY_FILM_ID_FROM_FILMS_DIRECTORS, directorId);
