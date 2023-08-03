@@ -36,11 +36,11 @@ public class DatabaseReviewRepository implements ReviewRepository {
     private static final String SQL_QUERY_GET_ALL_REVIEWS_FOR_FILM_ID = "SELECT * FROM REVIEWS " +
                                                                         "WHERE FILM_ID = :filmId " +
                                                                         "ORDER BY USEFULNESS DESC LIMIT :count";
-    private static final String SQL_QUERY_GET_REVIEW_USEFUL = "SELECT SUM(TEMP.RESULT) AS RESULT FROM "+
-                                                              "(SELECT count(USER_ID) AS RESULT FROM REVIEWS_LIKES "+
-                                                              "WHERE REVIEW_ID = :id AND IS_USEFUL = TRUE "+
-                                                              "UNION ALL "+
-                                                              "SELECT -count(USER_ID) AS RESULT FROM REVIEWS_LIKES "+
+    private static final String SQL_QUERY_GET_REVIEW_USEFUL = "SELECT SUM(TEMP.RESULT) AS RESULT FROM " +
+                                                              "(SELECT count(USER_ID) AS RESULT FROM REVIEWS_LIKES " +
+                                                              "WHERE REVIEW_ID = :id AND IS_USEFUL = TRUE " +
+                                                              "UNION ALL " +
+                                                              "SELECT -count(USER_ID) AS RESULT FROM REVIEWS_LIKES " +
                                                               "WHERE REVIEW_ID = :id AND IS_USEFUL = FALSE) AS TEMP";
 
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
