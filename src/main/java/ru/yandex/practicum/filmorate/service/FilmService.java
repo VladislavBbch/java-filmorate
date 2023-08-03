@@ -92,7 +92,7 @@ public class FilmService {
         }
     }
 
-    public Set<Film> getDirectorFilms(long id, String sortBy) {
+    public List<Film> getDirectorFilms(long id, String sortBy) {
         return filmRepository.getDirectorFilms(id, sortBy);
     }
 }

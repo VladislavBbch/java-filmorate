@@ -28,4 +28,9 @@ public class DirectorService {
         repository.getById(director.getId());
         return repository.update(director);
     }
+
+    public void deleteDirector(Long id) {
+        repository.getById(id);
+        repository.delete(id);
+    }
 }
