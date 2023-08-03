@@ -10,4 +10,6 @@ public interface CrudRepository<T> {
     T update(T t);
 
     T getById(Long id);
+
+    void delete(Long id);
 }
