@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.InvalidValueException;
+import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
@@ -27,12 +27,12 @@ public class DatabaseFilmRepository implements FilmRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
+    private final DatabaseGenreRepository databaseGenreRepository;
     private static final String SQL_QUERY_GET_BY_ID = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
             "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
             "FROM FILMS AS F " +
             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
             "WHERE F.ID = :id";
-    private static final String SQL_QUERY_INSERT_FILM = "INSERT INTO FILMS_DIRECTORS(FILM_ID, DIRECTOR_ID) VALUES(?, ?)";
     private static final String SQL_QUERY_READ_FILMS = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
             "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
             "FROM FILMS AS F " +
@@ -84,8 +84,12 @@ public class DatabaseFilmRepository implements FilmRepository {
                 entry("DURATION", film.getDuration()),
                 entry("RATING_ID", film.getRatingMpa().getId())
         )).longValue();
-            updateDirectors(film, id, true);
-        return getById(id);
+        updateDirectors(film, id, true);
+        return film.toBuilder()
+                .id(id)
+                .ratingMpa(getRatingInfo(film.getRatingMpa().getId()))
+                .directors(getDirectorsByFilmId(id))
+                .build();
     }
 
     @Override
@@ -136,6 +140,7 @@ public class DatabaseFilmRepository implements FilmRepository {
                 .releaseDate(filmRow.getDate("RELEASE_DATE").toLocalDate())
                 .duration(filmRow.getInt("DURATION"))
                 .directors(getDirectorsByFilmId(filmRow.getLong("ID")))
+                .genres(databaseGenreRepository.getFilmGenres(filmRow.getLong("ID")))
                 .ratingMpa(new RatingMpa(
                         filmRow.getLong("RATING_ID"), filmRow.getString("RATING_NAME")))
                 .build();
@@ -157,15 +162,15 @@ public class DatabaseFilmRepository implements FilmRepository {
         if (film.getDirectors() != null) {
             List<Director> listOfDirectors = new ArrayList<>(film.getDirectors());
             jdbcTemplate.batchUpdate(SQL_QUERY_INSERT_DIRECTOR, new BatchPreparedStatementSetter() {
-                        public void setValues(PreparedStatement ps, int i) throws SQLException {
-                            ps.setLong(1, id);
-                            ps.setLong(2, listOfDirectors.get(i).getId());
-                        }
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    ps.setLong(1, id);
+                    ps.setLong(2, listOfDirectors.get(i).getId());
+                }
 
-                        public int getBatchSize() {
-                            return listOfDirectors.size();
-                        }
-                    });
+                public int getBatchSize() {
+                    return listOfDirectors.size();
+                }
+            });
         }
     }
 
@@ -190,7 +195,9 @@ public class DatabaseFilmRepository implements FilmRepository {
                     filmSet.add(getById(rowSet.getLong("FILM_ID")));
                     sortedByYear.addAll(filmSet);
                 }
-                return new ArrayList<>(sortedByYear);
+                if (!sortedByYear.isEmpty()) {
+                    return new ArrayList<>(sortedByYear);
+                } else throw new ObjectNotFoundException("Director Films Not Found");
 
             case ("likes"):
                 SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
@@ -198,8 +205,10 @@ public class DatabaseFilmRepository implements FilmRepository {
                 while (filmRow.next()) {
                     sortedByLikes.add(getById(filmRow.getLong("FILM_ID")));
                 }
-                return sortedByLikes;
+                if (!sortedByLikes.isEmpty()) {
+                    return sortedByLikes;
+                } else throw new ObjectNotFoundException("Director Films Not Found");
         }
-        throw new InvalidValueException("Get Director Films Exception");
+        return null;
     }
 }

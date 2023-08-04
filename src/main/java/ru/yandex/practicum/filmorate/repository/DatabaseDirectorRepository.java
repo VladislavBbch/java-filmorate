@@ -2,16 +2,14 @@ package ru.yandex.practicum.filmorate.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +24,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private static final String SQL_QUERY_GET_ALL = "SELECT * FROM DIRECTORS";
-    private static final String SQL_QUERY_GET_DIRECTOR_BY_ID = "SELECT * FROM DIRECTORS WHERE ID = ?";
+    private static final String SQL_QUERY_GET_DIRECTOR_BY_ID = "SELECT * FROM DIRECTORS WHERE ID = :id";
     private static final String SQL_QUERY_DELETE_DIRECTOR = "DELETE FROM DIRECTORS WHERE ID = :id";
     private static final String SQL_QUERY_UPDATE_DIRECTOR = "UPDATE DIRECTORS SET NAME = :name WHERE ID = :id";
 
@@ -44,7 +42,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
     @Override
     public Director update(Director director) {
         try {
-            namedParameterJdbcTemplate.queryForRowSet(
+            namedParameterJdbcTemplate.update(
                     SQL_QUERY_UPDATE_DIRECTOR, Map.of("name", director.getName(), "id", director.getId()));
             return director;
         } catch (RuntimeException e) {
@@ -54,23 +52,27 @@ public class DatabaseDirectorRepository implements DirectorRepository {
 
     @Override
     public List<Director> read() {
-        return new ArrayList<>(jdbcTemplate.query(SQL_QUERY_GET_ALL, this::mapRowToDirector));
+        List<Director> getAll = new ArrayList<>();
+        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(SQL_QUERY_GET_ALL);
+        while (rowSet.next()) {
+            getAll.add(mapRowToDirector(rowSet));
+        }
+        return getAll;
     }
 
     @Override
     public Director getById(Long id) {
-        try {
-            return jdbcTemplate.queryForObject(SQL_QUERY_GET_DIRECTOR_BY_ID, this::mapRowToDirector, id);
-        } catch (EmptyResultDataAccessException e) {
-            throw new ObjectNotFoundException("Get By Id Exception");
-        }
+        SqlRowSet rs = namedParameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_DIRECTOR_BY_ID, Map.of("id", id));
+        if (rs.next()) {
+            return mapRowToDirector(rs);
+        } else throw new ObjectNotFoundException("Director Not Found");
     }
 
     public void delete(Long id) {
         namedParameterJdbcTemplate.update(SQL_QUERY_DELETE_DIRECTOR, Map.of("id", id));
     }
 
-    private Director mapRowToDirector(ResultSet rs, int rowNum) throws SQLException {
+    private Director mapRowToDirector(SqlRowSet rs) {
         if (rs.getRow() == 0) {
             throw new ObjectNotFoundException("Director not found");
         }
