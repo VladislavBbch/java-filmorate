@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -76,7 +77,7 @@ public class DatabaseGenreRepository implements GenreRepository {
         List<Genre> genres = new ArrayList<>(film.getGenres());
         jdbcTemplate.batchUpdate(SQL_QUERY_ADD_FILM_GENRES, //INSERT - ON CONFLICT DO NOTHING
                 new BatchPreparedStatementSetter() {
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    public void setValues(@NotNull PreparedStatement ps, int i) throws SQLException {
                         ps.setLong(1, film.getId());
                         ps.setLong(2, genres.get(i).getId());
                     }
