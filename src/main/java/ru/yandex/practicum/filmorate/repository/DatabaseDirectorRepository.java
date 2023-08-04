@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
@@ -23,10 +24,11 @@ import static java.util.Map.entry;
 public class DatabaseDirectorRepository implements DirectorRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private static final String SQL_QUERY_GET_ALL = "SELECT * FROM DIRECTORS";
     private static final String SQL_QUERY_GET_DIRECTOR_BY_ID = "SELECT * FROM DIRECTORS WHERE ID = ?";
-    private static final String SQL_QUERY_DELETE_DIRECTOR = "DELETE FROM DIRECTORS WHERE ID = ?";
-    private static final String SQL_QUERY_UPDATE_DIRECTOR = "UPDATE DIRECTORS SET NAME = ? WHERE ID =";
+    private static final String SQL_QUERY_DELETE_DIRECTOR = "DELETE FROM DIRECTORS WHERE ID = :id";
+    private static final String SQL_QUERY_UPDATE_DIRECTOR = "UPDATE DIRECTORS SET NAME = :name WHERE ID = :id";
 
 
     @Override
@@ -43,7 +45,8 @@ public class DatabaseDirectorRepository implements DirectorRepository {
     @Override
     public Director update(Director director) {
         try {
-            jdbcTemplate.update(SQL_QUERY_UPDATE_DIRECTOR + director.getId(), director.getName());
+            namedParameterJdbcTemplate.queryForRowSet(
+                    SQL_QUERY_UPDATE_DIRECTOR, Map.of("name", director.getName(), "id", director.getId()));
             return director;
         } catch (RuntimeException e) {
             throw new ObjectNotFoundException("Update Director Exception");
@@ -65,7 +68,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
     }
 
     public void delete(Long id) {
-        jdbcTemplate.update(SQL_QUERY_DELETE_DIRECTOR, id);
+        namedParameterJdbcTemplate.update(SQL_QUERY_DELETE_DIRECTOR, Map.of("id", id));
     }
 
     private Director mapRowToDirector(ResultSet rs, int rowNum) throws SQLException {

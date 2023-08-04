@@ -22,7 +22,10 @@ public class FilmController {
 
     @GetMapping
     public List<Film> getFilms() {
-        return filmService.getFilms();
+        log.info("Начало обработки запроса на получение списка всех фильмов");
+        List<Film> films = filmService.getFilms();
+        log.info("Окончание обработки запроса на получение списка всех фильмов");
+        return films;
     }
 
     @PostMapping
@@ -69,13 +72,17 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count) {
-        log.info("Обработка запроса на список популярных фильмов");
-        return filmService.getMostPopularFilms(count);
+        log.info("Начало обработки запроса на получение списка популярных фильмов");
+        List<Film> mostPopularFilms = filmService.getMostPopularFilms(count);
+        log.info("Окончание обработки запроса на получение списка популярных фильмов");
+        return mostPopularFilms;
     }
 
     @GetMapping("director/{directorId}")
     public List<Film> getDirectorFilms(@PathVariable long directorId, @RequestParam String sortBy) {
-        log.info("Обработка запроса на фильмы режиссера {}", directorId);
-        return filmService.getDirectorFilms(directorId, sortBy);
+        log.info("Начало обработки запроса на получение фильмов режиссера {}", directorId);
+        List<Film> directorFilms = filmService.getDirectorFilms(directorId, sortBy);
+        log.info("Окончание обработки запроса на получение фильмов режиссера {}", directorId);
+        return directorFilms;
     }
 }

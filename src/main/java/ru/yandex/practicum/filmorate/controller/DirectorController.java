@@ -16,34 +16,43 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 public class DirectorController {
+
     private final DirectorService service;
 
     @GetMapping
     public List<Director> getDirectorsList() {
-        log.info("Обработка запроса списка режиссеров");
-        return service.getAll();
+        log.info("Начало обработки запроса на получение списка всех режиссеров");
+        List<Director> getAll = service.getAll();
+        log.info("Окончание обработки запроса на получение списка всех режиссеров");
+        return getAll;
     }
     @GetMapping("/{id}")
     public Director getById(@PathVariable Long id) {
-        log.info("Обработка запроса получение режиссера {}", id);
-        return service.getById(id);
+        log.info("Начало обработки запроса на получение режиссера {}", id);
+        Director getById = service.getById(id);
+        log.info("Окончание обработки запроса на получение режиссера {}", id);
+        return getById;
     }
     @PostMapping
     public Director addDirector(@RequestBody @Valid Director director) {
-        log.info("Обработка запроса добавления режиссера");
-        return service.addDirector(director);
+        log.info("Начало обработки запроса на добавление режиссера");
+        Director addedDirector = service.addDirector(director);
+        log.info("Окончание обработки запроса на добавление режиссера");
+        return addedDirector;
     }
 
     @PutMapping
     public Director updateDirector(@RequestBody @Valid Director director) {
-        log.info("Обработка запроса обновления режиссера");
-        return service.updateDirector(director);
+        log.info("Начало обработки запроса на обновление режиссера");
+        Director updatedDirector = service.updateDirector(director);
+        log.info("Окончание обработки запроса на обновление режиссера");
+        return updatedDirector;
     }
 
     @DeleteMapping("/{id}")
     public void deleteDirector(@PathVariable Long id) {
-        log.info("Обработка запроса удаления режиссера");
+        log.info("Начало обработки запроса на удаление режиссера");
         service.deleteDirector(id);
+        log.info("Окончание обработки запроса на удаление режиссера");
     }
-
 }
