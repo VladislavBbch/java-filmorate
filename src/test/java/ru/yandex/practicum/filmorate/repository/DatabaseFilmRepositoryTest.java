@@ -107,7 +107,7 @@ public class DatabaseFilmRepositoryTest {
     @DisplayName("возвращать популярные фильмы")
     @Test
     public void shouldGetMostPopularFilms() {
-        List<Film> popularFilms = filmRepository.getMostPopularFilms(3);
+        List<Film> popularFilms = filmRepository.getMostPopularFilms(3, null);
         assertNotNull(popularFilms);
         assertEquals(3, popularFilms.size());
         Film film = popularFilms.get(0);
@@ -119,5 +119,12 @@ public class DatabaseFilmRepositoryTest {
         film = popularFilms.get(2);
         assertNotNull(film);
         assertEquals(3L, film.getId(), "идентификатор3");
+
+        popularFilms = filmRepository.getMostPopularFilms(3, 2001);
+        assertNotNull(popularFilms);
+        assertEquals(1, popularFilms.size());
+        film = popularFilms.get(0);
+        assertNotNull(film);
+        assertEquals(1L, film.getId(), "идентификатор1");
     }
 }

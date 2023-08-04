@@ -71,9 +71,11 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count) {
+    public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count,
+                                          @RequestParam(required = false) @Positive Long genreId,
+                                          @RequestParam(required = false) @Positive Integer year) {
         log.info("Начало обработки запроса на получение списка популярных фильмов");
-        List<Film> mostPopularFilms = filmService.getMostPopularFilms(count);
+        List<Film> mostPopularFilms = filmService.getMostPopularFilms(count, genreId, year);
         log.info("Окончание обработки запроса на получение списка популярных фильмов");
         return mostPopularFilms;
     }
@@ -95,7 +97,7 @@ public class FilmController {
     }
 
     @DeleteMapping("/{filmId}")
-    public void deleteFilm(@PathVariable("filmId") Long id) {
+    public void deleteFilm(@PathVariable("filmId") @Positive Long id) {
         log.info("Начало обработки запроса по удалению фильма: {}", id);
         filmService.deleteFilm(id);
         log.info("Окончание обработки запроса по удалению фильма");
