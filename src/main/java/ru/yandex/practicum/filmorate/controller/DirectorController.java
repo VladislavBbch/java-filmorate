@@ -37,22 +37,22 @@ public class DirectorController {
     public Director addDirector(@RequestBody @Valid Director director) {
         log.info("Начало обработки запроса на добавление режиссера");
         Director addedDirector = service.addDirector(director);
-        log.info("Окончание обработки запроса на добавление режиссера");
+        log.info("Окончание обработки запроса на добавление режиссера {}", addedDirector.getId());
         return addedDirector;
     }
 
     @PutMapping
     public Director updateDirector(@RequestBody @Valid Director director) {
-        log.info("Начало обработки запроса на обновление режиссера");
+        log.info("Начало обработки запроса на обновление режиссера {}", director.getId());
         Director updatedDirector = service.updateDirector(director);
-        log.info("Окончание обработки запроса на обновление режиссера");
+        log.info("Окончание обработки запроса на обновление режиссера {}", director.getId());
         return updatedDirector;
     }
 
     @DeleteMapping("/{id}")
     public void deleteDirector(@PathVariable Long id) {
-        log.info("Начало обработки запроса на удаление режиссера");
+        log.info("Начало обработки запроса на удаление режиссера {}", id);
         service.deleteDirector(id);
-        log.info("Окончание обработки запроса на удаление режиссера");
+        log.info("Окончание обработки запроса на удаление режиссера {}", id);
     }
 }
