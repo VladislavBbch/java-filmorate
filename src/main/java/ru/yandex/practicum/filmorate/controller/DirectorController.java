@@ -26,6 +26,7 @@ public class DirectorController {
         log.info("Окончание обработки запроса на получение списка всех режиссеров");
         return getAll;
     }
+
     @GetMapping("/{id}")
     public Director getById(@PathVariable Long id) {
         log.info("Начало обработки запроса на получение режиссера {}", id);
@@ -33,6 +34,7 @@ public class DirectorController {
         log.info("Окончание обработки запроса на получение режиссера {}", id);
         return getById;
     }
+
     @PostMapping
     public Director addDirector(@RequestBody @Valid Director director) {
         log.info("Начало обработки запроса на добавление режиссера {}", director);
