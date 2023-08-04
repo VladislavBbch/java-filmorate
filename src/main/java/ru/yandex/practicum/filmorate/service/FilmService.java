@@ -98,6 +98,8 @@ public class FilmService {
     }
 
     public List<Film> getDirectorFilms(long id, String sortBy) {
-        return filmRepository.getDirectorFilms(id, sortBy);
+        List<Film> films = filmRepository.getDirectorFilms(id, sortBy);
+        films.forEach(film -> film.setGenres(genreRepository.getFilmGenres(film.getId())));
+        return films;
     }
 }

@@ -27,7 +27,6 @@ public class DatabaseFilmRepository implements FilmRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
-    private final DatabaseGenreRepository databaseGenreRepository;
     private static final String SQL_QUERY_GET_BY_ID = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
             "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
             "FROM FILMS AS F " +
@@ -140,7 +139,6 @@ public class DatabaseFilmRepository implements FilmRepository {
                 .releaseDate(filmRow.getDate("RELEASE_DATE").toLocalDate())
                 .duration(filmRow.getInt("DURATION"))
                 .directors(getDirectorsByFilmId(filmRow.getLong("ID")))
-                .genres(databaseGenreRepository.getFilmGenres(filmRow.getLong("ID")))
                 .ratingMpa(new RatingMpa(
                         filmRow.getLong("RATING_ID"), filmRow.getString("RATING_NAME")))
                 .build();
