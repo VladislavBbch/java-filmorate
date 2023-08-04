@@ -35,17 +35,17 @@ public class DirectorController {
     }
     @PostMapping
     public Director addDirector(@RequestBody @Valid Director director) {
-        log.info("Начало обработки запроса на добавление режиссера");
+        log.info("Начало обработки запроса на добавление режиссера {}", director);
         Director addedDirector = service.addDirector(director);
-        log.info("Окончание обработки запроса на добавление режиссера {}", addedDirector.getId());
+        log.info("Окончание обработки запроса на добавление режиссера {}", addedDirector);
         return addedDirector;
     }
 
     @PutMapping
     public Director updateDirector(@RequestBody @Valid Director director) {
-        log.info("Начало обработки запроса на обновление режиссера {}", director.getId());
+        log.info("Начало обработки запроса на обновление режиссера {}", director);
         Director updatedDirector = service.updateDirector(director);
-        log.info("Окончание обработки запроса на обновление режиссера {}", director.getId());
+        log.info("Окончание обработки запроса на обновление режиссера {}", director);
         return updatedDirector;
     }
 
