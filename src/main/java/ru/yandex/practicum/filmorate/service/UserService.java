@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.event.Event;
+import ru.yandex.practicum.filmorate.model.event.EventType;
+import ru.yandex.practicum.filmorate.model.event.Operation;
+import ru.yandex.practicum.filmorate.repository.FeedRepository;
 import ru.yandex.practicum.filmorate.repository.FriendRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
@@ -14,6 +18,7 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final FeedRepository feedRepository;
 
     public User createUser(User user) {
         checkUserName(user);
@@ -47,12 +52,14 @@ public class UserService {
         getUserById(userId);
         getUserById(friendId);
         friendRepository.addFriend(userId, friendId);
+        feedRepository.createEvent(userId, friendId, EventType.FRIEND, Operation.ADD);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
         getUserById(userId);
         getUserById(friendId);
         friendRepository.deleteFriend(userId, friendId);
+        feedRepository.createEvent(userId, friendId, EventType.FRIEND, Operation.REMOVE);
     }
 
     public List<User> getUserFriends(Long userId) {
@@ -64,6 +71,11 @@ public class UserService {
         getUserById(userId);
         getUserById(friendId);
         return friendRepository.getCommonFriends(userId, friendId);
+    }
+
+    public List<Event> getUserFeed(Long id) {
+        getUserById(id);
+        return feedRepository.getUserFeed(id);
     }
 
     private void checkUserName(User user) {
