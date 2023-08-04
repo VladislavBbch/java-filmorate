@@ -116,14 +116,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
                     return listOfDirectors.size();
                 }
             });
-            SqlRowSet rs = parameterJdbcTemplate.queryForRowSet("SELECT D.ID AS ID, " +
-                    "D.NAME AS NAME FROM FILMS F " +
-                    "JOIN FILMS_DIRECTORS FD ON F.ID = FD.FILM_ID " +
-                    "JOIN DIRECTORS D ON FD.DIRECTOR_ID = D.ID " +
-                    "WHERE F.ID = :id", Map.of("id", id));
-            while (rs.next()) {
-                directors.add(mapRowToDirector(rs));
-            }
+            return getDirectorsByFilmId(id);
         }
         return directors;
     }
@@ -167,6 +160,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
         List<Long> ids = films.stream().map(Film::getId).collect(Collectors.toList());
         SqlParameterSource idsMap = new MapSqlParameterSource("ids", ids);
         SqlRowSet rs = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_FILMS_BY_YEAR, idsMap);
+
         if (rs.next()) {
             Map<Long, Film> filmsMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
             do {
@@ -178,10 +172,17 @@ public class DatabaseDirectorRepository implements DirectorRepository {
                 directors.add(mapRowToDirector(rs));
                 film.setDirectors(directors);
             } while (rs.next());
-            films = new ArrayList<>(filmsMap.values());
-        }
-        for (Film film : films) {
-            if (film.getDirectors() == null) {
+
+            for (Film film : films) {
+                Set<Director> directors = filmsMap.get(film.getId()).getDirectors();
+                if (directors == null) {
+                    film.setDirectors(new HashSet<>());
+                } else {
+                    film.setDirectors(directors);
+                }
+            }
+        } else {
+            for (Film film : films) {
                 film.setDirectors(new HashSet<>());
             }
         }

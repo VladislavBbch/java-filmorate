@@ -127,10 +127,17 @@ public class DatabaseGenreRepository implements GenreRepository {
                         new Genre(filmRow.getLong("GENRE_ID"), filmRow.getString("GENRE_NAME")));
                 film.setGenres(genres);
             } while (filmRow.next());
-            films = new ArrayList<>(filmsMap.values());
-        }
-        for (Film film : films) {
-            if (film.getGenres() == null) {
+
+            for (Film film : films) {
+                Set<Genre> genres = filmsMap.get(film.getId()).getGenres();
+                if (genres == null) {
+                    film.setGenres(new HashSet<>());
+                } else {
+                    film.setGenres(genres);
+                }
+            }
+        } else {
+            for (Film film : films) {
                 film.setGenres(new HashSet<>());
             }
         }

@@ -47,7 +47,6 @@ public class FilmService {
         genreRepository.addFilmGenres(createdFilm);
         createdFilm.setGenres(genreRepository.getFilmGenres(createdFilm.getId()));
         createdFilm.setDirectors(directorRepository.updateDirectors(film, createdFilm.getId(), true));
-        createdFilm.setDirectors(directorRepository.getDirectorsByFilmId(createdFilm.getId()));
         return createdFilm;
     }
 
@@ -86,8 +85,15 @@ public class FilmService {
         feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
     }
 
-    public List<Film> getMostPopularFilms(Integer count) {
-        return genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count));
+    public List<Film> getMostPopularFilms(Integer count, Long genreId, Integer year) {
+        List<Film> popularFilms = genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count, year));
+        if (genreId != null) {
+            popularFilms = popularFilms.stream()
+                    .filter(film -> film.getGenres().stream().map(Genre::getId).collect(Collectors.toList()).contains(genreId))
+                    .collect(Collectors.toList());
+        }
+        directorRepository.enrichFilmDirectors(popularFilms);
+        return popularFilms;
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
@@ -97,7 +103,9 @@ public class FilmService {
         if (userRepository.getById(friendId) == null) {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + friendId);
         }
-        return genreRepository.enrichFilmsByGenres(filmRepository.getCommonFilms(userId, friendId));
+        List<Film> commonFilms = genreRepository.enrichFilmsByGenres(filmRepository.getCommonFilms(userId, friendId));
+        directorRepository.enrichFilmDirectors(commonFilms);
+        return commonFilms;
     }
 
     private void checkRatingMpa(Long id) {
