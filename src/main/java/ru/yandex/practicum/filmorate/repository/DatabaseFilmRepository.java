@@ -113,6 +113,12 @@ public class DatabaseFilmRepository implements FilmRepository {
     }
 
     @Override
+    public void delete(Long id) {
+        parameterJdbcTemplate.update("DELETE FROM FILMS " +
+                "WHERE ID = :id", Map.of("id", id));
+    }
+
+    @Override
     public List<Film> getMostPopularFilms(Integer count) {
         List<Film> films = new ArrayList<>();
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_POPULAR, Map.of("count", count));
