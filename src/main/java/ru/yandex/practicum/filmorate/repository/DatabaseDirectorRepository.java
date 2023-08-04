@@ -73,6 +73,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
     private Director mapRowToDirector(ResultSet rs, int rowNum) throws SQLException {
         if (rs.getRow() == 0) {
             throw new ObjectNotFoundException("Director not found");
-        } return new Director(rs.getLong("id"), rs.getString("name"));
+        }
+        return new Director(rs.getLong("id"), rs.getString("name"));
     }
 }
