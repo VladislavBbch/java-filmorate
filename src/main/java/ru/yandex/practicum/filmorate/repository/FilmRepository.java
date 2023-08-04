@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface FilmRepository extends CrudRepository<Film> {
     List<Film> getMostPopularFilms(Integer count);
+
     List<Film> getDirectorFilms(long directorId, String sortBy);
 }
