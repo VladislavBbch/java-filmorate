@@ -3,12 +3,14 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.event.Event;
 import ru.yandex.practicum.filmorate.model.event.EventType;
 import ru.yandex.practicum.filmorate.model.event.Operation;
 import ru.yandex.practicum.filmorate.repository.FeedRepository;
 import ru.yandex.practicum.filmorate.repository.FriendRepository;
+import ru.yandex.practicum.filmorate.repository.RecommendationRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.util.List;
@@ -19,6 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final FeedRepository feedRepository;
+    private final RecommendationRepository recommendationRepository;
 
     public User createUser(User user) {
         checkUserName(user);
@@ -78,10 +81,14 @@ public class UserService {
         return feedRepository.getUserFeed(id);
     }
 
+    public List<Film> getRecommendations(Long userId) {
+        getUserById(userId);
+        return recommendationRepository.getByUserIdForLike(userId);
+    }
+
     private void checkUserName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
     }
-
 }

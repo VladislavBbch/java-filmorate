@@ -21,7 +21,6 @@ import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
-@Primary
 public class DatabaseReviewRepository implements ReviewRepository {
     private static final String SQL_QUERY_GET_REVIEW_BY_ID = "SELECT * FROM REVIEWS WHERE ID = :id";
     private static final String SQL_QUERY_CREATE_REVIEW = "INSERT INTO REVIEWS " +
