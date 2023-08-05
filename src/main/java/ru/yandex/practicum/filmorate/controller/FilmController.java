@@ -79,7 +79,7 @@ public class FilmController {
     }
 
     @GetMapping("director/{directorId}")
-    public List<Film> getDirectorFilms(@PathVariable long directorId, @RequestParam String sortBy) {
+    public List<Film> getDirectorFilms(@PathVariable @Positive Long directorId, @RequestParam String sortBy) {
         log.info("Начало обработки запроса на получение фильмов режиссера {}", directorId);
         List<Film> directorFilms = filmService.getDirectorFilms(directorId, sortBy);
         log.info("Окончание обработки запроса на получение фильмов режиссера {}", directorId);
@@ -87,7 +87,7 @@ public class FilmController {
     }
 
     @DeleteMapping("/{filmId}")
-    public void deleteFilm(@PathVariable("filmId") Long id) {
+    public void deleteFilm(@PathVariable("filmId") @Positive Long id) {
         log.info("Начало обработки запроса по удалению фильма: {}", id);
         filmService.deleteFilm(id);
         log.info("Окончание обработки запроса по удалению фильма");

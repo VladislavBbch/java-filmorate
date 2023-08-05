@@ -7,6 +7,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.repository.*;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,9 +21,12 @@ public class FilmService {
     private final RatingMpaRepository ratingMpaRepository;
     private final GenreRepository genreRepository;
     private final LikeRepository likeRepository;
+    private final DirectorRepository directorRepository;
 
     public List<Film> getFilms() {
-        return genreRepository.enrichFilmsByGenres(filmRepository.read());
+        List<Film> films = genreRepository.enrichFilmsByGenres(filmRepository.read());
+        films.forEach(film -> film.setDirectors(directorRepository.getDirectorsByFilmId(film.getId())));
+        return films;
     }
 
     public Film getFilmById(Long filmId) {
@@ -30,6 +35,7 @@ public class FilmService {
             throw new ObjectNotFoundException("Несуществующий id фильма: " + filmId);
         }
         film.setGenres(genreRepository.getFilmGenres(filmId));
+        film.setDirectors(directorRepository.getDirectorsByFilmId(filmId));
         return film;
     }
 
@@ -39,6 +45,8 @@ public class FilmService {
         Film createdFilm = filmRepository.create(film);
         genreRepository.addFilmGenres(createdFilm);
         createdFilm.setGenres(genreRepository.getFilmGenres(createdFilm.getId()));
+        createdFilm.setDirectors(directorRepository.updateDirectors(film, createdFilm.getId(), true));
+        createdFilm.setDirectors(directorRepository.getDirectorsByFilmId(createdFilm.getId()));
         return createdFilm;
     }
 
@@ -50,6 +58,7 @@ public class FilmService {
         genreRepository.deleteFilmGenres(updatedFilm.getId());
         genreRepository.addFilmGenres(updatedFilm);
         updatedFilm.setGenres(genreRepository.getFilmGenres(updatedFilm.getId()));
+        updatedFilm.setDirectors(directorRepository.updateDirectors(film, film.getId(), false));
         return updatedFilm;
     }
 
@@ -97,9 +106,15 @@ public class FilmService {
         }
     }
 
-    public List<Film> getDirectorFilms(long id, String sortBy) {
-        List<Film> films = filmRepository.getDirectorFilms(id, sortBy);
-        films.forEach(film -> film.setGenres(genreRepository.getFilmGenres(film.getId())));
+    public List<Film> getDirectorFilms(Long id, String sortBy) {
+        List<Film> films = new ArrayList<>();
+        for (Long aLong : directorRepository.getDirectorFilms(id, sortBy)) {
+            films.add(filmRepository.getById(aLong));
+        }
+        films.forEach(film -> film.setDirectors(directorRepository.getDirectorsByFilmId(film.getId())));
+        if (genreRepository.enrichFilmsByGenres(films) == null || films.isEmpty()) {
+            throw new ObjectNotFoundException("Director Films Not Found");
+        }
         return films;
     }
 }
