@@ -24,18 +24,18 @@ public class DatabaseFeedRepository implements FeedRepository {
     @Override
     public void createEvent(Long userId, Long entityId, EventType eventType, Operation operation) {
         Long eventTypeId = getEventTypeId(eventType);
-        Long operationId = getOperationId(operation);
         if (eventTypeId == null)
             throw new RuntimeException("Несуществующий в базе тип операции: " + eventType);
+        Long operationId = getOperationId(operation);
         if (operationId == null)
             throw new RuntimeException("Несуществующая в базе операция: " + operation);
         parameterJdbcTemplate.update(
-                "INSERT INTO EVENTS (USER_ID, ENTITY_ID, EVENT_TIMESTAMP, EVENT_TYPE_ID, OPERATION_ID) " +
+                "INSERT INTO EVENTS (USER_ID, ENTITY_ID, EVENT_TIMESTAMP, TYPE_ID, OPERATION_ID) " +
                         "VALUES (:userId, :entityId, :eventTimestamp, :eventTypeId, :operationId)",
                 Map.ofEntries(
                         entry("userId", userId),
                         entry("entityId", entityId),
-                        entry("eventTimestamp", Instant.now().toEpochMilli()),
+                        entry("eventTimestamp", Instant.now()),
                         entry("eventTypeId", eventTypeId),
                         entry("operationId", operationId)));
     }
@@ -48,10 +48,10 @@ public class DatabaseFeedRepository implements FeedRepository {
                         "E.USER_ID, " +
                         "E.ENTITY_ID," +
                         "E.EVENT_TIMESTAMP, " +
-                        "ET.NAME AS EVENT_TYPE_NAME, " +
+                        "ET.NAME AS TYPE_NAME, " +
                         "O.NAME AS OPERATION_NAME " +
                         "FROM EVENTS AS E " +
-                        "INNER JOIN EVENT_TYPES AS ET ON E.EVENT_TYPE_ID = ET.ID " +
+                        "INNER JOIN EVENT_TYPES AS ET ON E.TYPE_ID = ET.ID " +
                         "INNER JOIN OPERATIONS AS O ON E.OPERATION_ID = O.ID " +
                         "WHERE E.USER_ID = :userId", Map.of("userId", userId));
         while (feedRow.next()) {
@@ -86,10 +86,10 @@ public class DatabaseFeedRepository implements FeedRepository {
     private Event mapRowToEvent(SqlRowSet eventRow) {
         return Event.builder()
                 .eventId(eventRow.getLong("ID"))
-                .timestamp(eventRow.getLong("EVENT_TIMESTAMP"))
+                .timestamp(eventRow.getTimestamp("EVENT_TIMESTAMP").toInstant().toEpochMilli())
                 .userId(eventRow.getLong("USER_ID"))
                 .entityId(eventRow.getLong("ENTITY_ID"))
-                .eventType(EventType.valueOf(eventRow.getString("EVENT_TYPE_NAME")))
+                .eventType(EventType.valueOf(eventRow.getString("TYPE_NAME")))
                 .operation(Operation.valueOf(eventRow.getString("OPERATION_NAME")))
                 .build();
     }
