@@ -17,16 +17,14 @@ public class DirectorService {
         List<Director> directors = repository.read();
         if (directors != null) {
             return directors;
-        }
-        else throw new ObjectNotFoundException("Directors Not Found");
+        } else throw new ObjectNotFoundException("Directors Not Found");
     }
 
     public Director getById(Long id) {
         Director director = repository.getById(id);
         if (director != null) {
             return director;
-        }
-         else throw new ObjectNotFoundException("Director Not Found");
+        } else throw new ObjectNotFoundException("Director Not Found");
     }
 
     public Director addDirector(Director director) {
