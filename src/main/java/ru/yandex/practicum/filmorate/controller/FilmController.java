@@ -78,6 +78,7 @@ public class FilmController {
         List<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
         log.info("Окончание обработки запроса на получение общих фильмов");
         return commonFilms;
+    }
 
     @DeleteMapping("/{filmId}")
     public void deleteFilm(@PathVariable("filmId") Long id) {
