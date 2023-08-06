@@ -38,6 +38,11 @@ public class UserService {
         return userRepository.update(user);
     }
 
+    public void deleteUser(Long userId) {
+        getUserById(userId); // Проверка на наличие пользователя
+        userRepository.delete(userId);
+    }
+
     public void addFriend(Long userId, Long friendId) {
         getUserById(userId);
         getUserById(friendId);

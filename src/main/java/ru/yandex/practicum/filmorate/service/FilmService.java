@@ -53,6 +53,11 @@ public class FilmService {
         return updatedFilm;
     }
 
+    public void deleteFilm(Long filmId) {
+        getFilmById(filmId); // Проверка на наличие фильма
+        filmRepository.delete(filmId);
+    }
+
     public void addLike(Long filmId, Long userId) {
         getFilmById(filmId);
         if (userRepository.getById(userId) == null) {

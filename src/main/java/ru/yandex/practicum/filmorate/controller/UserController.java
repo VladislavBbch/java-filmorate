@@ -74,4 +74,11 @@ public class UserController {
         log.info("Окончание обработки запроса по получению общих друзей для пользователей");
         return result;
     }
+
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable("userId") Long id) {
+        log.info("Начало обработки запроса по удалению пользователя: {}", id);
+        userService.deleteUser(id);
+        log.info("Окончание обработки запроса по удалению пользователя");
+    }
 }

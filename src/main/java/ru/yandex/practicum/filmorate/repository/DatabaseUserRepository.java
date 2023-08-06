@@ -73,6 +73,12 @@ public class DatabaseUserRepository implements UserRepository {
         return user;
     }
 
+    @Override
+    public void delete(Long id) {
+        parameterJdbcTemplate.update("DELETE FROM USERS " +
+                "WHERE ID = :id", Map.of("id", id));
+    }
+
     private User mapRowToUser(SqlRowSet userRow) {
         return User.builder()
                 .id(userRow.getLong("ID"))
