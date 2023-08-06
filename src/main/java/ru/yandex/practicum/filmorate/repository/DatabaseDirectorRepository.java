@@ -50,6 +50,9 @@ public class DatabaseDirectorRepository implements DirectorRepository {
             "WHERE D.DIRECTOR_ID = :id GROUP BY F.ID ORDER BY LIKES DESC";
     private static final String SQL_QUERY_GET_DIRECTOR_BY_FILM_ID = "SELECT ID, NAME FROM DIRECTORS D " +
             "LEFT JOIN FILMS_DIRECTORS FD on FD.DIRECTOR_ID=D.ID WHERE FD.FILM_ID= :id";
+    private static final String SQL_QUERY_GET_FILMS_BY_YEAR = "SELECT FD.FILM_ID, D.ID, D.NAME FROM DIRECTORS AS D " +
+            "JOIN FILMS_DIRECTORS AS FD ON D.ID = FD.DIRECTOR_ID " +
+            "WHERE FILM_ID IN (:ids)";
 
     @Override
     public Director create(Director director) {
@@ -163,9 +166,7 @@ public class DatabaseDirectorRepository implements DirectorRepository {
     public void enrichFilmDirectors(List<Film> films) {
         List<Long> ids = films.stream().map(Film::getId).collect(Collectors.toList());
         SqlParameterSource idsMap = new MapSqlParameterSource("ids", ids);
-        SqlRowSet rs = parameterJdbcTemplate.queryForRowSet("SELECT FD.FILM_ID, D.ID, D.NAME FROM DIRECTORS AS D " +
-                "JOIN FILMS_DIRECTORS AS FD ON D.ID = FD.DIRECTOR_ID " +
-                "WHERE FILM_ID IN (:ids)", idsMap);
+        SqlRowSet rs = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_FILMS_BY_YEAR, idsMap);
         if (rs.next()) {
             Map<Long, Film> filmsMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
             do {
