@@ -90,6 +90,13 @@ public class FilmService {
         return genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count));
     }
 
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        if (userRepository.getById(userId) == null || userRepository.getById(friendId) == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
+        }
+        return genreRepository.enrichFilmsByGenres(filmRepository.getCommonFilms(userId, friendId));
+    }
+
     private void checkRatingMpa(Long id) {
         if (ratingMpaRepository.getById(id) == null) {
             throw new ObjectNotFoundException("Несуществующий id жанра: " + id);

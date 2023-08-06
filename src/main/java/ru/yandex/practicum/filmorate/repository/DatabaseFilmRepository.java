@@ -110,6 +110,24 @@ public class DatabaseFilmRepository implements FilmRepository {
         return films;
     }
 
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        List<Film> films = new ArrayList<>();
+        SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
+                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
+                        "FROM FILMS AS F " +
+                        "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
+                        "JOIN LIKES AS UL ON F.ID = UL.FILM_ID AND UL.USER_ID = :userId " +
+                        "JOIN LIKES AS FL ON F.ID = FL.FILM_ID AND FL.USER_ID = :friendId " +
+                        "JOIN (SELECT FILM_ID, COUNT(USER_ID) AS RATE FROM LIKES GROUP BY FILM_ID) " +
+                        "AS R ON R.FILM_ID = F.ID " +
+                        "ORDER BY RATE DESC", Map.of("userId", userId, "friendId", friendId));
+        while (filmRow.next()) {
+            films.add(mapRowToFilm(filmRow));
+        }
+        return films;
+    }
+
     private Film mapRowToFilm(SqlRowSet filmRow) {
         return Film.builder()
                 .id(filmRow.getLong("ID"))
