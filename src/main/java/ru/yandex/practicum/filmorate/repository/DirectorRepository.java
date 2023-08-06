@@ -11,7 +11,9 @@ public interface DirectorRepository extends CrudRepository<Director> {
 
     Set<Director> updateDirectors(Film film, long id, boolean isNew);
 
-    List<Long> getDirectorFilms(Long directorId, String sortBy);
+    List<Film> getDirectorFilms(Long directorId, String sortBy);
 
     Set<Director> getDirectorsByFilmId(long filmId);
+
+    void enrichFilmDirectors(List<Film> films);
 }

@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.repository.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -106,12 +105,10 @@ public class FilmService {
     }
 
     public List<Film> getDirectorFilms(Long id, String sortBy) {
-        List<Film> films = new ArrayList<>();
-        for (Long aLong : directorRepository.getDirectorFilms(id, sortBy)) {
-            films.add(filmRepository.getById(aLong));
-        }
-        films.forEach(film -> film.setDirectors(directorRepository.getDirectorsByFilmId(film.getId())));
-        if (genreRepository.enrichFilmsByGenres(films) == null || films.isEmpty()) {
+        List<Film> films = directorRepository.getDirectorFilms(id, sortBy);
+        directorRepository.enrichFilmDirectors(films);
+        genreRepository.enrichFilmsByGenres(films);
+        if (films.isEmpty()) {
             throw new ObjectNotFoundException("Director Films Not Found");
         }
         return films;
