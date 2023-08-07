@@ -91,8 +91,11 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-        if (userRepository.getById(userId) == null || userRepository.getById(friendId) == null) {
+        if (userRepository.getById(userId) == null) {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
+        }
+        if (userRepository.getById(friendId) == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + friendId);
         }
         return genreRepository.enrichFilmsByGenres(filmRepository.getCommonFilms(userId, friendId));
     }
