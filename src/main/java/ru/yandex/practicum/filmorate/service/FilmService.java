@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.event.EventType;
+import ru.yandex.practicum.filmorate.model.event.Operation;
 import ru.yandex.practicum.filmorate.repository.*;
 
 import java.util.List;
@@ -20,6 +22,7 @@ public class FilmService {
     private final GenreRepository genreRepository;
     private final LikeRepository likeRepository;
     private final DirectorRepository directorRepository;
+    private final FeedRepository feedRepository;
 
     public List<Film> getFilms() {
         List<Film> films = genreRepository.enrichFilmsByGenres(filmRepository.read());
@@ -71,6 +74,7 @@ public class FilmService {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
         }
         likeRepository.addLike(filmId, userId);
+        feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.ADD);
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -79,6 +83,7 @@ public class FilmService {
             throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
         }
         likeRepository.deleteLike(filmId, userId);
+        feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
     }
 
     public List<Film> getMostPopularFilms(Integer count) {

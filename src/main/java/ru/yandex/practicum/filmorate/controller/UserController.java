@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.event.Event;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
@@ -80,5 +81,13 @@ public class UserController {
         log.info("Начало обработки запроса по удалению пользователя: {}", id);
         userService.deleteUser(id);
         log.info("Окончание обработки запроса по удалению пользователя");
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getUserFeed(@PathVariable Long id) {
+        log.info("Начало обработки запроса по получению ленты событий пользователя: {}", id);
+        List<Event> feed = userService.getUserFeed(id);
+        log.info("Окончание обработки запроса по получению ленты событий пользователя");
+        return feed;
     }
 }
