@@ -21,6 +21,7 @@ public class FilmService {
     private final RatingMpaRepository ratingMpaRepository;
     private final GenreRepository genreRepository;
     private final LikeRepository likeRepository;
+    private final DirectorRepository directorRepository;
     private final FeedRepository feedRepository;
     private final DirectorRepository directorRepository;
 

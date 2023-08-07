@@ -95,7 +95,7 @@ public class FilmController {
     }
 
     @DeleteMapping("/{filmId}")
-    public void deleteFilm(@PathVariable("filmId") @Positive Long id) {
+    public void deleteFilm(@PathVariable("filmId") Long id) {
         log.info("Начало обработки запроса по удалению фильма: {}", id);
         filmService.deleteFilm(id);
         log.info("Окончание обработки запроса по удалению фильма");
