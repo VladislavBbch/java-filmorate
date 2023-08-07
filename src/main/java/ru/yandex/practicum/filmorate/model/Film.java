@@ -33,4 +33,5 @@ public class Film {
     @Valid
     private RatingMpa ratingMpa;
     private Set<Genre> genres;
+    private Set<Director> directors;
 }

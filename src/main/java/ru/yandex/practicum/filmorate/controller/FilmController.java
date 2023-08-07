@@ -22,7 +22,10 @@ public class FilmController {
 
     @GetMapping
     public List<Film> getFilms() {
-        return filmService.getFilms();
+        log.info("Начало обработки запроса на получение списка всех фильмов");
+        List<Film> films = filmService.getFilms();
+        log.info("Окончание обработки запроса на получение списка всех фильмов");
+        return films;
     }
 
     @PostMapping
@@ -69,7 +72,18 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count) {
-        return filmService.getMostPopularFilms(count);
+        log.info("Начало обработки запроса на получение списка популярных фильмов");
+        List<Film> mostPopularFilms = filmService.getMostPopularFilms(count);
+        log.info("Окончание обработки запроса на получение списка популярных фильмов");
+        return mostPopularFilms;
+    }
+
+    @GetMapping("director/{directorId}")
+    public List<Film> getDirectorFilms(@PathVariable @Positive Long directorId, @RequestParam String sortBy) {
+        log.info("Начало обработки запроса на получение фильмов режиссера {}", directorId);
+        List<Film> directorFilms = filmService.getDirectorFilms(directorId, sortBy);
+        log.info("Окончание обработки запроса на получение фильмов режиссера {}", directorId);
+        return directorFilms;
     }
 
     @GetMapping("/common")
@@ -81,7 +95,7 @@ public class FilmController {
     }
 
     @DeleteMapping("/{filmId}")
-    public void deleteFilm(@PathVariable("filmId") Long id) {
+    public void deleteFilm(@PathVariable("filmId") @Positive Long id) {
         log.info("Начало обработки запроса по удалению фильма: {}", id);
         filmService.deleteFilm(id);
         log.info("Окончание обработки запроса по удалению фильма");
