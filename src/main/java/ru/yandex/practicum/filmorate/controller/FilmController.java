@@ -73,7 +73,7 @@ public class FilmController {
     }
 
     @GetMapping("/common")
-    public List<Film> getCommonFilms(@RequestParam("friendId") Long friendId, @RequestParam("userId") Long userId) {
+    public List<Film> getCommonFilms(@RequestParam Long friendId, @RequestParam Long userId) {
         log.info("Начало обработки запроса на получение общих фильмов пользователей {} и {}", userId, friendId);
         List<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
         log.info("Окончание обработки запроса на получение общих фильмов");
