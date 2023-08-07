@@ -11,9 +11,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Map.entry;
 
@@ -21,17 +19,34 @@ import static java.util.Map.entry;
 @RequiredArgsConstructor
 @Primary
 public class DatabaseFilmRepository implements FilmRepository {
+
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
+    private static final String SQL_QUERY_GET_BY_ID = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
+            "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
+            "FROM FILMS AS F " +
+            "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
+            "WHERE F.ID = :id";
+    private static final String SQL_QUERY_READ_FILMS = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
+            "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
+            "FROM FILMS AS F " +
+            "JOIN RATINGS AS R ON F.RATING_ID = R.ID";
+    private static final String SQL_QUERY_UPDATE_FILM = "UPDATE FILMS SET NAME = :name, DESCRIPTION = :description, " +
+            "RELEASE_DATE = :releaseDate, DURATION = :duration, RATING_ID = :ratingId WHERE FILMS.ID = :id";
+    private static final String SQL_QUERY_GET_POPULAR = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
+            "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
+            "FROM LIKES GROUP BY FILM_ID) AS LIKES " +
+            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+            "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
+            "ORDER BY LIKES.LIKE_COUNT DESC " +
+            "LIMIT :count";
+    private static final String SQL_QUERY_GET_RATINGS = "SELECT * FROM RATINGS WHERE RATINGS.ID = :id";
 
     @Override
     @Nullable
     public Film getById(Long id) {
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                        "FROM FILMS AS F " +
-                        "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
-                        "WHERE F.ID = :id", Map.of("id", id));
+                SQL_QUERY_GET_BY_ID, Map.of("id", id));
         if (filmRow.next()) {
             return mapRowToFilm(filmRow);
         }
@@ -59,10 +74,7 @@ public class DatabaseFilmRepository implements FilmRepository {
     @Override
     public List<Film> read() {
         List<Film> films = new ArrayList<>();
-        SqlRowSet filmRow = jdbcTemplate.queryForRowSet(
-                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                        "FROM FILMS AS F " +
-                        "JOIN RATINGS AS R ON F.RATING_ID = R.ID");
+        SqlRowSet filmRow = jdbcTemplate.queryForRowSet(SQL_QUERY_READ_FILMS);
         while (filmRow.next()) {
             films.add(mapRowToFilm(filmRow));
         }
@@ -72,17 +84,13 @@ public class DatabaseFilmRepository implements FilmRepository {
     @Override
     public Film update(Film film) {
         Long filmId = film.getId();
-        parameterJdbcTemplate.update("UPDATE FILMS SET NAME = :name, DESCRIPTION = :description, " +
-                        "RELEASE_DATE = :releaseDate, DURATION = :duration, RATING_ID = :ratingId " +
-                        "WHERE FILMS.ID = :id",
-                Map.ofEntries(
-                        entry("name", film.getName()),
-                        entry("description", film.getDescription()),
-                        entry("releaseDate", film.getReleaseDate()),
-                        entry("duration", film.getDuration()),
-                        entry("ratingId", film.getRatingMpa().getId()),
-                        entry("id", filmId)
-                ));
+        parameterJdbcTemplate.update(SQL_QUERY_UPDATE_FILM, Map.ofEntries(
+                entry("name", film.getName()),
+                entry("description", film.getDescription()),
+                entry("releaseDate", film.getReleaseDate()),
+                entry("duration", film.getDuration()),
+                entry("ratingId", film.getRatingMpa().getId()),
+                entry("id", filmId)));
         return film;
     }
 
@@ -95,15 +103,7 @@ public class DatabaseFilmRepository implements FilmRepository {
     @Override
     public List<Film> getMostPopularFilms(Integer count) {
         List<Film> films = new ArrayList<>();
-        SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                        "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                        "      FROM LIKES " +
-                        "      GROUP BY FILM_ID) AS LIKES " +
-                        "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
-                        "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
-                        "ORDER BY LIKES.LIKE_COUNT DESC " +
-                        "LIMIT :count", Map.of("count", count));
+        SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_POPULAR, Map.of("count", count));
         while (filmRow.next()) {
             films.add(mapRowToFilm(filmRow));
         }
@@ -117,13 +117,14 @@ public class DatabaseFilmRepository implements FilmRepository {
                 .description(filmRow.getString("DESCRIPTION"))
                 .releaseDate(filmRow.getDate("RELEASE_DATE").toLocalDate())
                 .duration(filmRow.getInt("DURATION"))
-                .ratingMpa(new RatingMpa(filmRow.getLong("RATING_ID"), filmRow.getString("RATING_NAME")))
+                .ratingMpa(new RatingMpa(
+                        filmRow.getLong("RATING_ID"), filmRow.getString("RATING_NAME")))
                 .build();
     }
 
     private RatingMpa getRatingInfo(Long ratingId) {
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                "SELECT * FROM RATINGS WHERE RATINGS.ID = :id", Map.of("id", ratingId));
+                SQL_QUERY_GET_RATINGS, Map.of("id", ratingId));
         if (filmRow.next()) {
             return new RatingMpa(filmRow.getLong("ID"), filmRow.getString("NAME"));
         }
