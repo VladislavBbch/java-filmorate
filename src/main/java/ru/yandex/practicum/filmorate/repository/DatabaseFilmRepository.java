@@ -109,7 +109,7 @@ public class DatabaseFilmRepository implements FilmRepository {
         }
         return films;
     }
-    
+
     @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> films = new ArrayList<>();
