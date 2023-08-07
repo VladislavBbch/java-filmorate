@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -22,11 +23,24 @@ import java.util.stream.Collectors;
 public class DatabaseGenreRepository implements GenreRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
+    private static final String SQL_QUERY_GET_ALL = "SELECT * FROM GENRES";
+    private static final String SQL_QUERY_GET_BY_ID = "SELECT * FROM GENRES WHERE ID = :id";
+    private static final String SQL_QUERY_GET_BY_IDS = "SELECT * FROM GENRES WHERE ID IN (:ids)";
+    private static final String SQL_QUERY_ADD_FILM_GENRES = "MERGE INTO FILMS_GENRES (FILM_ID, GENRE_ID) VALUES (?, ?)";
+    private static final String SQL_QUERY_DELETE_FILM_GENRES = "DELETE FROM FILMS_GENRES WHERE FILM_ID = :id";
+    private static final String SQL_QUERY_GET_FILM_GENRES = "SELECT G.ID, G.NAME FROM FILMS_GENRES " +
+            "JOIN GENRES AS G ON FILMS_GENRES.GENRE_ID = G.ID " +
+            "WHERE FILM_ID = :id";
+    private static final String SQL_QUERY_ENRICH_FILM_BY_GENRES = "SELECT FG.FILM_ID, G.ID AS GENRE_ID, " +
+            "G.NAME AS GENRE_NAME " +
+            "FROM FILMS_GENRES AS FG " +
+            "JOIN GENRES AS G ON FG.GENRE_ID = G.ID " +
+            "WHERE FG.FILM_ID IN (:ids)";
 
     @Override
     public List<Genre> read() {
         List<Genre> genres = new ArrayList<>();
-        SqlRowSet genreRow = jdbcTemplate.queryForRowSet("SELECT * FROM GENRES");
+        SqlRowSet genreRow = jdbcTemplate.queryForRowSet(SQL_QUERY_GET_ALL);
         while (genreRow.next()) {
             genres.add(mapRowToGenre(genreRow));
         }
@@ -36,7 +50,7 @@ public class DatabaseGenreRepository implements GenreRepository {
     @Override
     @Nullable
     public Genre getById(Long id) {
-        SqlRowSet genreRow = parameterJdbcTemplate.queryForRowSet("SELECT * FROM GENRES WHERE ID = :id", Map.of("id", id));
+        SqlRowSet genreRow = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_BY_ID, Map.of("id", id));
         if (genreRow.next()) {
             return mapRowToGenre(genreRow);
         }
@@ -48,7 +62,7 @@ public class DatabaseGenreRepository implements GenreRepository {
     public List<Genre> getByIds(List<Long> ids) {
         List<Genre> genres = new ArrayList<>();
         SqlParameterSource idsMap = new MapSqlParameterSource("ids", ids);
-        SqlRowSet genreRow = parameterJdbcTemplate.queryForRowSet("SELECT * FROM GENRES WHERE ID IN (:ids)", idsMap);
+        SqlRowSet genreRow = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_BY_IDS, idsMap);
         while (genreRow.next()) {
             genres.add(mapRowToGenre(genreRow));
         }
@@ -61,9 +75,9 @@ public class DatabaseGenreRepository implements GenreRepository {
             return;
         }
         List<Genre> genres = new ArrayList<>(film.getGenres());
-        jdbcTemplate.batchUpdate("MERGE INTO FILMS_GENRES (FILM_ID, GENRE_ID) VALUES (?, ?)", //INSERT - ON CONFLICT DO NOTHING
+        jdbcTemplate.batchUpdate(SQL_QUERY_ADD_FILM_GENRES, //INSERT - ON CONFLICT DO NOTHING
                 new BatchPreparedStatementSetter() {
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    public void setValues(@NotNull PreparedStatement ps, int i) throws SQLException {
                         ps.setLong(1, film.getId());
                         ps.setLong(2, genres.get(i).getId());
                     }
@@ -76,17 +90,13 @@ public class DatabaseGenreRepository implements GenreRepository {
 
     @Override
     public void deleteFilmGenres(Long filmId) {
-        parameterJdbcTemplate.update("DELETE FROM FILMS_GENRES WHERE FILM_ID = :id", Map.of("id", filmId));
+        parameterJdbcTemplate.update(SQL_QUERY_DELETE_FILM_GENRES, Map.of("id", filmId));
     }
 
     @Override
     public Set<Genre> getFilmGenres(Long filmId) {
         Set<Genre> genres = new HashSet<>();
-        SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                "SELECT G.ID, G.NAME " +
-                        "FROM FILMS_GENRES " +
-                        "JOIN GENRES AS G ON FILMS_GENRES.GENRE_ID = G.ID " +
-                        "WHERE FILM_ID = :id", Map.of("id", filmId));
+        SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET_FILM_GENRES, Map.of("id", filmId));
         while (filmRow.next()) {
             genres.add(new Genre(filmRow.getLong("ID"), filmRow.getString("NAME")));
         }
@@ -103,10 +113,7 @@ public class DatabaseGenreRepository implements GenreRepository {
                 .collect(Collectors.toList());
         SqlParameterSource idsMap = new MapSqlParameterSource("ids", ids);
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                "SELECT FG.FILM_ID, G.ID AS GENRE_ID, G.NAME AS GENRE_NAME " +
-                        "FROM FILMS_GENRES AS FG " +
-                        "JOIN GENRES AS G ON FG.GENRE_ID = G.ID " +
-                        "WHERE FG.FILM_ID IN (:ids)", idsMap);
+                SQL_QUERY_ENRICH_FILM_BY_GENRES, idsMap);
 
         if (filmRow.next()) {
             Map<Long, Film> filmsMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
@@ -116,7 +123,8 @@ public class DatabaseGenreRepository implements GenreRepository {
                 if (genres == null) {
                     genres = new HashSet<>();
                 }
-                genres.add(new Genre(filmRow.getLong("GENRE_ID"), filmRow.getString("GENRE_NAME")));
+                genres.add(
+                        new Genre(filmRow.getLong("GENRE_ID"), filmRow.getString("GENRE_NAME")));
                 film.setGenres(genres);
             } while (filmRow.next());
             films = new ArrayList<>(filmsMap.values());

@@ -35,7 +35,7 @@ public class FilmTest {
     @Test
     public void shouldValidateId() {
         film = new Film(-1L, "Name", "Description", LocalDate.parse("1990-12-24"), 1,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(Positive.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "идентификатор <= 0");
@@ -46,21 +46,21 @@ public class FilmTest {
     @Test
     public void shouldValidateName() {
         film = new Film(1L, null, "Description", LocalDate.parse("1990-12-24"), 120,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(NotBlank.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");
         assertEquals("name", validate.getPropertyPath().toString(), "валидация на null, property");
 
         film = new Film(1L, "", "Description", LocalDate.parse("1990-12-24"), 120,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(NotBlank.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на empty");
         assertEquals("name", validate.getPropertyPath().toString(), "валидация на empty, property");
 
         film = new Film(1L, "   ", "Description", LocalDate.parse("1990-12-24"), 120,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(NotBlank.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на blank");
@@ -71,7 +71,7 @@ public class FilmTest {
     @Test
     public void shouldValidateDescription() {
         film = new Film(1L, "Name", null, LocalDate.parse("1990-12-24"), 120,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(NotNull.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");
@@ -80,7 +80,7 @@ public class FilmTest {
         film = new Film(1L, "Name", "DescriptionDescriptionDescriptionDescriptionDescription" +
                 "DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription" +
                 "DescriptionDescriptionDescriptionDescriptionDescription", LocalDate.parse("1990-12-24"),
-                120, new RatingMpa(1L, null), new HashSet<>());
+                120, new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(Size.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "описание более 200 символов");
@@ -91,14 +91,14 @@ public class FilmTest {
     @Test
     public void shouldValidateReleaseDate() {
         film = new Film(1L, "Name", "Description", null, 120,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(FilmReleaseDate.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");
         assertEquals("releaseDate", validate.getPropertyPath().toString(), "валидация на null, property");
 
         film = new Film(1L, "Name", "Description", LocalDate.parse("1800-12-24"), 120,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(FilmReleaseDate.class, validate.getConstraintDescriptor().getAnnotation().annotationType(),
@@ -111,14 +111,14 @@ public class FilmTest {
     @Test
     public void shouldValidateDuration() {
         film = new Film(1L, "Name", "Description", LocalDate.parse("1990-12-24"), -1,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(Positive.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "продолжительность <= 0");
         assertEquals("duration", validate.getPropertyPath().toString(), "продолжительность <= 0, property");
 
         film = new Film(1L, "Name", "Description", LocalDate.parse("1990-12-24"), 0,
-                new RatingMpa(1L, null), new HashSet<>());
+                new RatingMpa(1L, null), new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(Positive.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "продолжительность <= 0");
@@ -129,7 +129,7 @@ public class FilmTest {
     @Test
     public void shouldValidateRatingMpa() {
         film = new Film(1L, "Name", "Description", LocalDate.parse("1990-12-24"), 1,
-                null, new HashSet<>());
+                null, new HashSet<>(), new HashSet<>());
         validates = validator.validate(film);
         validate = validates.iterator().next();
         assertEquals(NotNull.class, validate.getConstraintDescriptor().getAnnotation().annotationType(), "валидация на null");

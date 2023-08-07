@@ -21,10 +21,13 @@ public class FilmService {
     private final RatingMpaRepository ratingMpaRepository;
     private final GenreRepository genreRepository;
     private final LikeRepository likeRepository;
+    private final DirectorRepository directorRepository;
     private final FeedRepository feedRepository;
 
     public List<Film> getFilms() {
-        return genreRepository.enrichFilmsByGenres(filmRepository.read());
+        List<Film> films = genreRepository.enrichFilmsByGenres(filmRepository.read());
+        films.forEach(film -> film.setDirectors(directorRepository.getDirectorsByFilmId(film.getId())));
+        return films;
     }
 
     public Film getFilmById(Long filmId) {
@@ -33,6 +36,7 @@ public class FilmService {
             throw new ObjectNotFoundException("Несуществующий id фильма: " + filmId);
         }
         film.setGenres(genreRepository.getFilmGenres(filmId));
+        film.setDirectors(directorRepository.getDirectorsByFilmId(filmId));
         return film;
     }
 
@@ -42,6 +46,8 @@ public class FilmService {
         Film createdFilm = filmRepository.create(film);
         genreRepository.addFilmGenres(createdFilm);
         createdFilm.setGenres(genreRepository.getFilmGenres(createdFilm.getId()));
+        createdFilm.setDirectors(directorRepository.updateDirectors(film, createdFilm.getId(), true));
+        createdFilm.setDirectors(directorRepository.getDirectorsByFilmId(createdFilm.getId()));
         return createdFilm;
     }
 
@@ -53,6 +59,7 @@ public class FilmService {
         genreRepository.deleteFilmGenres(updatedFilm.getId());
         genreRepository.addFilmGenres(updatedFilm);
         updatedFilm.setGenres(genreRepository.getFilmGenres(updatedFilm.getId()));
+        updatedFilm.setDirectors(directorRepository.updateDirectors(film, film.getId(), false));
         return updatedFilm;
     }
 
@@ -102,4 +109,13 @@ public class FilmService {
         }
     }
 
+    public List<Film> getDirectorFilms(Long id, String sortBy) {
+        List<Film> films = directorRepository.getDirectorFilms(id, sortBy);
+        directorRepository.enrichFilmDirectors(films);
+        genreRepository.enrichFilmsByGenres(films);
+        if (films.isEmpty()) {
+            throw new ObjectNotFoundException("Director Films Not Found");
+        }
+        return films;
+    }
 }
