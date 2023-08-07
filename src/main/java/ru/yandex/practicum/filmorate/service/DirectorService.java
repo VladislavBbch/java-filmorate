@@ -42,6 +42,7 @@ public class DirectorService {
     }
 
 
+
     public void deleteDirector(Long id) {
         repository.getById(id);
         repository.delete(id);
