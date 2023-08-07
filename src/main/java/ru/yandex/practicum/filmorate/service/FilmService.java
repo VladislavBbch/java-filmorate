@@ -26,7 +26,7 @@ public class FilmService {
 
     public List<Film> getFilms() {
         List<Film> films = genreRepository.enrichFilmsByGenres(filmRepository.read());
-        films.forEach(film -> film.setDirectors(directorRepository.getDirectorsByFilmId(film.getId())));
+        directorRepository.enrichFilmDirectors(films);
         return films;
     }
 
