@@ -47,8 +47,8 @@ public class DatabaseRecommendationRepository implements RecommendationRepositor
     private final FilmRowMapper filmMapper;
 
     @Override
-    public List<Film> getByUserIdForLike(Long UserId) {
-        List<Film> films = parameterJdbcTemplate.query(SQL_QUERY_GET, Map.of("id", UserId), filmMapper);
+    public List<Film> getByUserIdForLike(Long userId) {
+        List<Film> films = parameterJdbcTemplate.query(SQL_QUERY_GET, Map.of("id", userId), filmMapper);
         loadFilmsGenre(films);
         return films;
     }
