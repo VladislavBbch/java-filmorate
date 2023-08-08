@@ -15,7 +15,6 @@ import ru.yandex.practicum.filmorate.model.RatingMpa;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,13 +39,6 @@ public class DatabaseFilmRepository implements FilmRepository {
             "JOIN RATINGS AS R ON F.RATING_ID = R.ID";
     private static final String SQL_QUERY_UPDATE_FILM = "UPDATE FILMS SET NAME = :name, DESCRIPTION = :description, " +
             "RELEASE_DATE = :releaseDate, DURATION = :duration, RATING_ID = :ratingId WHERE FILMS.ID = :id";
-    private static final String SQL_QUERY_GET_POPULAR = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
-            "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-            "FROM LIKES GROUP BY FILM_ID) AS LIKES " +
-            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
-            "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
-            "ORDER BY LIKES.LIKE_COUNT DESC " +
-            "LIMIT :count";
     private static final String SQL_QUERY_GET_RATINGS = "SELECT * FROM RATINGS WHERE RATINGS.ID = :id";
 
     @Override
