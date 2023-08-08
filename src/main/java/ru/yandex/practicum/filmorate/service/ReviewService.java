@@ -2,11 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.event.EventType;
 import ru.yandex.practicum.filmorate.model.event.Operation;
 import ru.yandex.practicum.filmorate.repository.*;
@@ -31,7 +29,7 @@ public class ReviewService {
     }
 
     public Review getReviewById(Long id) {
-       return findReviewById(id);
+        return findReviewById(id);
     }
 
     public Review createReview(Review review) {
@@ -52,12 +50,13 @@ public class ReviewService {
     }
 
     public void deleteReviewById(Long id) {
-        final Review review = reviewRepository.getById(id);
+        final Review review = findReviewById(id);
         feedRepository.createEvent(review.getUserId(), review.getReviewId(), EventType.REVIEW, Operation.REMOVE);
         reviewRepository.delete(id);
     }
 
     public void putLikeToReview(Long id, Long userId, boolean isLike) {
+        checkUser(userId);
         final Review review = findReviewById(id);
         likeRepository.addLike(id, userId, isLike);
         controlUsefulForReview(review);
@@ -65,6 +64,7 @@ public class ReviewService {
     }
 
     public void deleteLikeToReview(Long id, Long userId, boolean isLike) {
+        checkUser(userId);
         final Review review = findReviewById(id);
         likeRepository.deleteLike(id, userId, isLike);
         controlUsefulForReview(review);
@@ -84,14 +84,16 @@ public class ReviewService {
         if (film == null) {
             throw new ObjectNotFoundException("Несуществующий id фильма: " + review.getFilmId());
         }
-
-        User user = userRepository.getById(review.getUserId());
-        if (user == null) {
-            throw new ObjectNotFoundException("Несуществующий id пользователя: " + review.getUserId());
-        }
+        checkUser(review.getUserId());
     }
 
     private void controlUsefulForReview(Review review) {
         review.setUsefulness(reviewRepository.getUsefulnessReviewById(review.getReviewId()));
+    }
+
+    private void checkUser(Long id) {
+        if (userRepository.getById(id) == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + id);
+        }
     }
 }

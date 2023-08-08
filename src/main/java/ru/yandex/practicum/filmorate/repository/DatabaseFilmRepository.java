@@ -23,24 +23,16 @@ import static java.util.Map.entry;
 public class DatabaseFilmRepository implements FilmRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
-    private static final String SQL_QUERY_GET_BY_ID = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
-            "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-            "FROM FILMS AS F " +
-            "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
-            "WHERE F.ID = :id";
-    private static final String SQL_QUERY_READ_FILMS = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
-            "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-            "FROM FILMS AS F " +
-            "JOIN RATINGS AS R ON F.RATING_ID = R.ID";
-    private static final String SQL_QUERY_UPDATE_FILM = "UPDATE FILMS SET NAME = :name, DESCRIPTION = :description, " +
-            "RELEASE_DATE = :releaseDate, DURATION = :duration, RATING_ID = :ratingId WHERE FILMS.ID = :id";
-    private static final String SQL_QUERY_GET_RATINGS = "SELECT * FROM RATINGS WHERE RATINGS.ID = :id";
 
     @Override
     @Nullable
     public Film getById(Long id) {
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                SQL_QUERY_GET_BY_ID, Map.of("id", id));
+                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
+                        "FROM FILMS AS F " +
+                        "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
+                        "WHERE F.ID = :id",
+                Map.of("id", id));
         if (filmRow.next()) {
             return mapRowToFilm(filmRow);
         }
@@ -68,7 +60,11 @@ public class DatabaseFilmRepository implements FilmRepository {
     @Override
     public List<Film> read() {
         List<Film> films = new ArrayList<>();
-        SqlRowSet filmRow = jdbcTemplate.queryForRowSet(SQL_QUERY_READ_FILMS);
+        SqlRowSet filmRow = jdbcTemplate.queryForRowSet(
+                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
+                        "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
+                        "FROM FILMS AS F " +
+                        "JOIN RATINGS AS R ON F.RATING_ID = R.ID");
         while (filmRow.next()) {
             films.add(mapRowToFilm(filmRow));
         }
@@ -78,13 +74,18 @@ public class DatabaseFilmRepository implements FilmRepository {
     @Override
     public Film update(Film film) {
         Long filmId = film.getId();
-        parameterJdbcTemplate.update(SQL_QUERY_UPDATE_FILM, Map.ofEntries(
-                entry("name", film.getName()),
-                entry("description", film.getDescription()),
-                entry("releaseDate", film.getReleaseDate()),
-                entry("duration", film.getDuration()),
-                entry("ratingId", film.getRatingMpa().getId()),
-                entry("id", filmId)));
+        parameterJdbcTemplate.update(
+                "UPDATE FILMS " +
+                        "SET NAME = :name, DESCRIPTION = :description, RELEASE_DATE = :releaseDate, " +
+                        "DURATION = :duration, RATING_ID = :ratingId " +
+                        "WHERE FILMS.ID = :id",
+                Map.ofEntries(
+                        entry("name", film.getName()),
+                        entry("description", film.getDescription()),
+                        entry("releaseDate", film.getReleaseDate()),
+                        entry("duration", film.getDuration()),
+                        entry("ratingId", film.getRatingMpa().getId()),
+                        entry("id", filmId)));
         return film;
     }
 
@@ -236,7 +237,8 @@ public class DatabaseFilmRepository implements FilmRepository {
 
     private RatingMpa getRatingInfo(Long ratingId) {
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                SQL_QUERY_GET_RATINGS, Map.of("id", ratingId));
+                "SELECT * FROM RATINGS WHERE RATINGS.ID = :id",
+                Map.of("id", ratingId));
         if (filmRow.next()) {
             return new RatingMpa(filmRow.getLong("ID"), filmRow.getString("NAME"));
         }

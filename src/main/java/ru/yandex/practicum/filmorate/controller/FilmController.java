@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.InvalidValueException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -40,10 +39,6 @@ public class FilmController {
     @PutMapping
     public Film updateFilm(@RequestBody @Valid Film film) {
         log.info("Начало обработки запроса на обновление фильма: {}", film);
-        Long id = film.getId();
-        if (id <= 0) {
-            throw new InvalidValueException("Некорректный id фильма");
-        }
         Film existingFilm = filmService.updateFilm(film);
         log.info("Окончание обработки запроса на обновление фильма");
         return existingFilm;
@@ -73,7 +68,7 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count,
-                                          @RequestParam(required = false) @Positive Long genreId,
+                                          @RequestParam(required = false) Long genreId,
                                           @RequestParam(required = false) @Positive Integer year) {
         log.info("Начало обработки запроса на получение списка популярных фильмов");
         List<Film> mostPopularFilms = filmService.getMostPopularFilms(count, genreId, year);
@@ -82,7 +77,7 @@ public class FilmController {
     }
 
     @GetMapping("director/{directorId}")
-    public List<Film> getDirectorFilms(@PathVariable @Positive Long directorId, @RequestParam String sortBy) {
+    public List<Film> getDirectorFilms(@PathVariable Long directorId, @RequestParam String sortBy) {
         log.info("Начало обработки запроса на получение фильмов режиссера {}", directorId);
         List<Film> directorFilms = filmService.getDirectorFilms(directorId, sortBy);
         log.info("Окончание обработки запроса на получение фильмов режиссера {}", directorId);
@@ -97,8 +92,8 @@ public class FilmController {
         return commonFilms;
     }
 
-    @DeleteMapping("/{filmId}")
-    public void deleteFilm(@PathVariable("filmId") @Positive Long id) {
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable Long id) {
         log.info("Начало обработки запроса по удалению фильма: {}", id);
         filmService.deleteFilm(id);
         log.info("Окончание обработки запроса по удалению фильма");
