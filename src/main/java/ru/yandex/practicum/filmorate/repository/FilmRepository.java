@@ -5,7 +5,9 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.util.List;
 
 public interface FilmRepository extends CrudRepository<Film> {
-    List<Film> getMostPopularFilms(Integer count, Integer year);
+    List<Film> getMostPopularFilms(Integer count);
 
     List<Film> getCommonFilms(Long userId, Long friendId);
+
+    List<Film> getRecommendationFilmByUserIdForLike(Long userId);
 }

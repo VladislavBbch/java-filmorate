@@ -3,14 +3,19 @@ package ru.yandex.practicum.filmorate.repository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +28,7 @@ import static java.util.Map.entry;
 public class DatabaseFilmRepository implements FilmRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
+    private final FilmRowMapper filmMapper;
     private static final String SQL_QUERY_GET_BY_ID = "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, " +
             "F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
             "FROM FILMS AS F " +
@@ -141,7 +147,7 @@ public class DatabaseFilmRepository implements FilmRepository {
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> films = new ArrayList<>();
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(
-                "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
+             "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
                         "FROM FILMS AS F " +
                         "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                         "JOIN LIKES AS UL ON F.ID = UL.FILM_ID AND UL.USER_ID = :userId " +
@@ -155,6 +161,26 @@ public class DatabaseFilmRepository implements FilmRepository {
         return films;
     }
 
+    @Override
+    public List<Film> getRecommendationFilmByUserIdForLike(Long userId) {
+        final String SQL_QUERY_GET = "SELECT f.*, r.NAME AS RATING_NAME FROM " +
+                                     "(SELECT MATCH.*, l.FILM_ID FROM " +
+                                     "(SELECT count(FILM_ID) AS PRIORITY, USER_ID " +
+                                     "FROM LIKES " +
+                                     "WHERE FILM_ID IN (SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
+                                     "AND USER_ID <> :id " +
+                                     "GROUP BY USER_ID " +
+                                     "ORDER BY count(FILM_ID) DESC) AS MATCH " +
+                                     "JOIN LIKES AS l ON MATCH.USER_ID = l.USER_ID " +
+                                     "WHERE l.FILM_ID NOT IN " +
+                                     "(SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
+                                     "LIMIT 1) AS S " +
+                                     "JOIN FILMS f ON S.FILM_ID = f.ID " +
+                                     "LEFT JOIN RATINGS r ON f.RATING_ID = r.ID";
+
+        return parameterJdbcTemplate.query(SQL_QUERY_GET, Map.of("id", userId), filmMapper);
+    }
+
     private Film mapRowToFilm(SqlRowSet filmRow) {
         return Film.builder()
                 .id(filmRow.getLong("ID"))
@@ -164,6 +190,22 @@ public class DatabaseFilmRepository implements FilmRepository {
                 .duration(filmRow.getInt("DURATION"))
                 .ratingMpa(new RatingMpa(filmRow.getLong("RATING_ID"), filmRow.getString("RATING_NAME")))
                 .build();
+    }
+
+    @Component
+    private static class FilmRowMapper implements RowMapper<Film> {
+        @Override
+        public Film mapRow(ResultSet filmRow, int rowNum) throws SQLException {
+            return Film.builder()
+                    .id(filmRow.getLong("ID"))
+                    .name(filmRow.getString("NAME"))
+                    .description(filmRow.getString("DESCRIPTION"))
+                    .releaseDate(filmRow.getDate("RELEASE_DATE").toLocalDate())
+                    .duration(filmRow.getInt("DURATION"))
+                    .ratingMpa(new RatingMpa(filmRow.getLong("RATING_ID"),
+                            filmRow.getString("RATING_NAME")))
+                    .build();
+        }
     }
 
     private RatingMpa getRatingInfo(Long ratingId) {

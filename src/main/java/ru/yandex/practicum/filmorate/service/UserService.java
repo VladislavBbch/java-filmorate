@@ -8,9 +8,11 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.event.Event;
 import ru.yandex.practicum.filmorate.model.event.EventType;
 import ru.yandex.practicum.filmorate.model.event.Operation;
+import ru.yandex.practicum.filmorate.repository.DirectorRepository;
 import ru.yandex.practicum.filmorate.repository.FeedRepository;
+import ru.yandex.practicum.filmorate.repository.FilmRepository;
 import ru.yandex.practicum.filmorate.repository.FriendRepository;
-import ru.yandex.practicum.filmorate.repository.RecommendationRepository;
+import ru.yandex.practicum.filmorate.repository.GenreRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.util.List;
@@ -21,7 +23,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final FeedRepository feedRepository;
-    private final RecommendationRepository recommendationRepository;
+    private final GenreRepository genreRepository;
+    private final FilmRepository filmRepository;
+    private final DirectorRepository directorRepository;
 
     public User createUser(User user) {
         checkUserName(user);
@@ -83,7 +87,9 @@ public class UserService {
 
     public List<Film> getRecommendations(Long userId) {
         getUserById(userId);
-        return recommendationRepository.getByUserIdForLike(userId);
+        List<Film> films = genreRepository.enrichFilmsByGenres(filmRepository.getRecommendationFilmByUserIdForLike(userId));
+        directorRepository.enrichFilmDirectors(films);
+        return films;
     }
 
     private void checkUserName(User user) {
