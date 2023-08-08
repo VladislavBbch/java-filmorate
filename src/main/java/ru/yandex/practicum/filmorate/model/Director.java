@@ -10,7 +10,7 @@ import javax.validation.constraints.Positive;
 @Builder
 public class Director {
     @Positive
-    private final long id;
+    private final Long id;
     @NotBlank
     private String name;
 }

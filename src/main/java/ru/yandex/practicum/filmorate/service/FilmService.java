@@ -26,9 +26,9 @@ public class FilmService {
     private final FeedRepository feedRepository;
 
     public List<Film> getFilms() {
-        List<Film> films = genreRepository.enrichFilmsByGenres(filmRepository.read());
+        List<Film> films = filmRepository.read();
         directorRepository.enrichFilmDirectors(films);
-        return films;
+        return genreRepository.enrichFilmsByGenres(films);
     }
 
     public Film getFilmById(Long filmId) {
@@ -64,31 +64,27 @@ public class FilmService {
     }
 
     public void deleteFilm(Long filmId) {
-        getFilmById(filmId); // Проверка на наличие фильма
+        getFilmById(filmId);
         filmRepository.delete(filmId);
     }
 
     public void addLike(Long filmId, Long userId) {
         getFilmById(filmId);
-        if (userRepository.getById(userId) == null) {
-            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
-        }
+        checkUser(userId);
         likeRepository.addLike(filmId, userId);
         feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.ADD);
     }
 
     public void deleteLike(Long filmId, Long userId) {
         getFilmById(filmId);
-        if (userRepository.getById(userId) == null) {
-            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
-        }
+        checkUser(userId);
         likeRepository.deleteLike(filmId, userId);
         feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
     }
 
     public List<Film> getMostPopularFilms(Integer count, Long genreId, Integer year) {
         List<Film> popularFilms = genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count, year));
-        if (genreId != null) {
+        if (genreId != null && genreId > 0) {
             popularFilms = popularFilms.stream()
                     .filter(film -> film.getGenres().stream().map(Genre::getId).collect(Collectors.toList()).contains(genreId))
                     .collect(Collectors.toList());
@@ -98,25 +94,26 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-        if (userRepository.getById(userId) == null) {
-            throw new ObjectNotFoundException("Несуществующий id пользователя: " + userId);
-        }
-        if (userRepository.getById(friendId) == null) {
-            throw new ObjectNotFoundException("Несуществующий id пользователя: " + friendId);
-        }
-        List<Film> commonFilms = genreRepository.enrichFilmsByGenres(filmRepository.getCommonFilms(userId, friendId));
+        checkUser(userId);
+        checkUser(friendId);
+        List<Film> commonFilms = filmRepository.getCommonFilms(userId, friendId);
         directorRepository.enrichFilmDirectors(commonFilms);
-        return commonFilms;
+        return genreRepository.enrichFilmsByGenres(commonFilms);
     }
 
-    public List<Film> getDirectorFilms(Long id, String sortBy) {
-        List<Film> films = directorRepository.getDirectorFilms(id, sortBy);
-        directorRepository.enrichFilmDirectors(films);
-        genreRepository.enrichFilmsByGenres(films);
-        if (films.isEmpty()) {
-            throw new ObjectNotFoundException("Director Films Not Found");
+    public List<Film> getDirectorFilms(Long directorId, String sortBy) {
+        if (!sortBy.equals("year") && !sortBy.equals("likes")) {
+            throw new InvalidValueException("sortBy");
         }
-        return films;
+        if (directorRepository.getById(directorId) == null) {
+            throw new ObjectNotFoundException("Несуществующий id режиссера: " + directorId);
+        }
+        List<Film> films = directorRepository.getDirectorFilms(directorId, sortBy);
+        if (films.isEmpty()) {
+            throw new ObjectNotFoundException("Не найдены фильмы режиссера: " + directorId);
+        }
+        directorRepository.enrichFilmDirectors(films);
+        return genreRepository.enrichFilmsByGenres(films);
     }
 
     public List<Film> searchFilms(String query, String by) {
@@ -137,6 +134,12 @@ public class FilmService {
     private void checkRatingMpa(Long id) {
         if (ratingMpaRepository.getById(id) == null) {
             throw new ObjectNotFoundException("Несуществующий id жанра: " + id);
+        }
+    }
+
+    private void checkUser(Long id) {
+        if (userRepository.getById(id) == null) {
+            throw new ObjectNotFoundException("Несуществующий id пользователя: " + id);
         }
     }
 

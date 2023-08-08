@@ -14,34 +14,26 @@ public class DirectorService {
     private final DirectorRepository repository;
 
     public List<Director> getAll() {
-        List<Director> directors = repository.read();
-        if (directors != null) {
-            return directors;
-        } else throw new ObjectNotFoundException("Directors Not Found");
+        return repository.read();
     }
 
     public Director getById(Long id) {
         Director director = repository.getById(id);
         if (director != null) {
             return director;
-        } else throw new ObjectNotFoundException("Director Not Found");
+        } else throw new ObjectNotFoundException("Несуществующий id режиссера: id");
     }
 
     public Director addDirector(Director director) {
-        Director createdDirector = repository.create(director);
-        if (createdDirector == null) {
-            throw new ObjectNotFoundException("Director Not Found");
-        }
-        return createdDirector;
+        return repository.create(director);
     }
 
     public Director updateDirector(Director director) {
-        if (repository.getById(director.getId()) != null) {
-            return repository.update(director);
-        } else throw new ObjectNotFoundException("Update Director Exception");
+        getById(director.getId());
+        return repository.update(director);
     }
 
-        public void deleteDirector(Long id) {
+    public void deleteDirector(Long id) {
         repository.getById(id);
         repository.delete(id);
     }
