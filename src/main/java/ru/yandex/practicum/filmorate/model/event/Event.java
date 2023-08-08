@@ -9,7 +9,6 @@ import javax.validation.constraints.Positive;
 @Data
 @Builder(toBuilder = true)
 public class Event {
-
     @NotNull
     private final Long timestamp;
     @Positive
@@ -22,5 +21,4 @@ public class Event {
     private final Long eventId;
     @Positive
     private final Long entityId;
-
 }
