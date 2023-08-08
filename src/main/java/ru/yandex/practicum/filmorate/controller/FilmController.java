@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Positive;
 import java.util.List;
 
@@ -101,5 +102,14 @@ public class FilmController {
         log.info("Начало обработки запроса по удалению фильма: {}", id);
         filmService.deleteFilm(id);
         log.info("Окончание обработки запроса по удалению фильма");
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilms(@RequestParam @NotEmpty String query,
+                                  @RequestParam @NotEmpty String by) {
+        log.info("Начало обработки запроса по поиску фильмов по тексту: {} с признаком: {}", query, by);
+        List<Film> films = filmService.searchFilms(query, by);
+        log.info("Окончание обработки запроса по поиску фильмов по тексту: {} с признаком: {}", query, by);
+        return films;
     }
 }
