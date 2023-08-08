@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.InvalidValueException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -108,6 +109,31 @@ public class FilmService {
         return commonFilms;
     }
 
+    public List<Film> getDirectorFilms(Long id, String sortBy) {
+        List<Film> films = directorRepository.getDirectorFilms(id, sortBy);
+        directorRepository.enrichFilmDirectors(films);
+        genreRepository.enrichFilmsByGenres(films);
+        if (films.isEmpty()) {
+            throw new ObjectNotFoundException("Director Films Not Found");
+        }
+        return films;
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+        List<Film> searchedFilms;
+        if (by.contains(",") && by.contains("director") && by.contains("title")) {
+            searchedFilms = filmRepository.searchFilms(query, true, true);
+        } else if (by.equals("director")) {
+            searchedFilms = filmRepository.searchFilms(query, true, false);
+        } else if (by.equals("title")) {
+            searchedFilms = filmRepository.searchFilms(query, false, true);
+        } else {
+            throw new InvalidValueException("Некорректный признак поиска 'by': " + by);
+        }
+        directorRepository.enrichFilmDirectors(searchedFilms);
+        return genreRepository.enrichFilmsByGenres(searchedFilms);
+    }
+
     private void checkRatingMpa(Long id) {
         if (ratingMpaRepository.getById(id) == null) {
             throw new ObjectNotFoundException("Несуществующий id жанра: " + id);
@@ -125,15 +151,5 @@ public class FilmService {
         if (existingGenres == null || existingGenres.size() != genres.size()) {
             throw new ObjectNotFoundException("Найден несуществующий id жанра в списке: " + genreIds);
         }
-    }
-
-    public List<Film> getDirectorFilms(Long id, String sortBy) {
-        List<Film> films = directorRepository.getDirectorFilms(id, sortBy);
-        directorRepository.enrichFilmDirectors(films);
-        genreRepository.enrichFilmsByGenres(films);
-        if (films.isEmpty()) {
-            throw new ObjectNotFoundException("Director Films Not Found");
-        }
-        return films;
     }
 }
