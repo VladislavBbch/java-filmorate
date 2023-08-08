@@ -54,7 +54,7 @@ public class DatabaseRecommendationRepository implements RecommendationRepositor
     }
 
     private void loadFilmsGenre(List<Film> films) {
-        films.forEach(f->f.setGenres(getFilmGenres(f.getId())));
+        films.forEach(f -> f.setGenres(getFilmGenres(f.getId())));
     }
 
     public Set<Genre> getFilmGenres(Long filmId) {
