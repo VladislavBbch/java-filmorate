@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -23,7 +22,6 @@ import static java.util.Map.entry;
 
 @Repository
 @RequiredArgsConstructor
-@Primary
 public class DatabaseDirectorRepository implements DirectorRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -165,9 +163,9 @@ public class DatabaseDirectorRepository implements DirectorRepository {
                 Set<Director> directors = film.getDirectors();
                 if (directors == null) {
                     directors = new HashSet<>();
+                    film.setDirectors(directors);
                 }
                 directors.add(mapRowToDirector(rs));
-                film.setDirectors(directors);
             } while (rs.next());
 
             for (Film film : films) {
