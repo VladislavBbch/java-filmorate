@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.repository;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -21,7 +20,6 @@ import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
-@Primary
 public class DatabaseReviewRepository implements ReviewRepository {
     private static final String SQL_QUERY_GET_REVIEW_BY_ID = "SELECT * FROM REVIEWS WHERE ID = :id";
     private static final String SQL_QUERY_CREATE_REVIEW = "INSERT INTO REVIEWS " +
