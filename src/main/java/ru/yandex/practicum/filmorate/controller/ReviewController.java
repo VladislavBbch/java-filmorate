@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
@@ -14,12 +15,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/reviews")
 @RequiredArgsConstructor
+@Validated
 public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping
     public List<Review> getReviews(@RequestParam(required = false) Long filmId,
-                                   @RequestParam(required = false, defaultValue = "10") @Positive Integer count) {
+                                   @RequestParam(defaultValue = "10") @Positive Integer count) {
         final String filmInfo = filmId == null ? " " : " для фильма с id:" + filmId;
         log.info("Начало получения отзывов в количестве {} штук{}", count, filmInfo);
         List<Review> reviews = reviewService.getReviews(filmId, count);

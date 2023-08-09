@@ -83,14 +83,12 @@ public class FilmService {
     }
 
     public List<Film> getMostPopularFilms(Integer count, Long genreId, Integer year) {
-        List<Film> popularFilms = genreRepository.enrichFilmsByGenres(filmRepository.getMostPopularFilms(count, year));
-        if (genreId != null && genreId > 0) {
-            popularFilms = popularFilms.stream()
-                    .filter(film -> film.getGenres().stream().map(Genre::getId).collect(Collectors.toList()).contains(genreId))
-                    .collect(Collectors.toList());
+        if (genreId != null && genreRepository.getById(genreId) == null) {
+            throw new ObjectNotFoundException("Несуществующий id жанра: " + genreId);
         }
+        List<Film> popularFilms = filmRepository.getMostPopularFilms(count, genreId, year);
         directorRepository.enrichFilmDirectors(popularFilms);
-        return popularFilms;
+        return genreRepository.enrichFilmsByGenres(popularFilms);
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {

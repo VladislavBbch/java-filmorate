@@ -107,24 +107,54 @@ public class DatabaseFilmRepositoryTest {
     @DisplayName("возвращать популярные фильмы")
     @Test
     public void shouldGetMostPopularFilms() {
-        List<Film> popularFilms = filmRepository.getMostPopularFilms(3, null);
+        List<Film> popularFilms = filmRepository.getMostPopularFilms(5, 2L, 2001);
         assertNotNull(popularFilms);
-        assertEquals(3, popularFilms.size());
+        assertEquals(1, popularFilms.size());
         Film film = popularFilms.get(0);
         assertNotNull(film);
-        assertEquals(5L, film.getId(), "идентификатор5");
-        film = popularFilms.get(1);
-        assertNotNull(film);
-        assertEquals(4L, film.getId(), "идентификатор4");
-        film = popularFilms.get(2);
-        assertNotNull(film);
-        assertEquals(3L, film.getId(), "идентификатор3");
+        assertEquals(1L, film.getId(), "идентификатор1");
 
-        popularFilms = filmRepository.getMostPopularFilms(3, 2001);
+        popularFilms = filmRepository.getMostPopularFilms(10, 1L, null);
         assertNotNull(popularFilms);
         assertEquals(1, popularFilms.size());
         film = popularFilms.get(0);
         assertNotNull(film);
-        assertEquals(1L, film.getId(), "идентификатор1");
+        assertEquals(1L, film.getId(), "идентификатор2");
+
+        popularFilms = filmRepository.getMostPopularFilms(3, null, 2001);
+        assertNotNull(popularFilms);
+        assertEquals(1, popularFilms.size());
+        film = popularFilms.get(0);
+        assertNotNull(film);
+        assertEquals(1L, film.getId(), "идентификатор3");
+
+        popularFilms = filmRepository.getMostPopularFilms(3, null, null);
+        assertNotNull(popularFilms);
+        assertEquals(3, popularFilms.size());
+        film = popularFilms.get(0);
+        assertNotNull(film);
+        assertEquals(5L, film.getId(), "идентификатор4");
+        film = popularFilms.get(1);
+        assertNotNull(film);
+        assertEquals(4L, film.getId(), "идентификатор5");
+        film = popularFilms.get(2);
+        assertNotNull(film);
+        assertEquals(3L, film.getId(), "идентификатор6");
+
+        popularFilms = filmRepository.getMostPopularFilms(10, null, null);
+        assertNotNull(popularFilms);
+        assertEquals(6, popularFilms.size());
+
+        popularFilms = filmRepository.getMostPopularFilms(3, 1L, 2000);
+        assertNotNull(popularFilms);
+        assertEquals(0, popularFilms.size());
+
+        popularFilms = filmRepository.getMostPopularFilms(3, 3L, 2001);
+        assertNotNull(popularFilms);
+        assertEquals(0, popularFilms.size());
+
+        popularFilms = filmRepository.getMostPopularFilms(0, 1L, 2001);
+        assertNotNull(popularFilms);
+        assertEquals(0, popularFilms.size());
     }
 }

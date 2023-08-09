@@ -8,7 +8,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import java.util.List;
 
@@ -69,7 +70,7 @@ public class FilmController {
     @GetMapping("/popular")
     public List<Film> getMostPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count,
                                           @RequestParam(required = false) Long genreId,
-                                          @RequestParam(required = false) @Positive Integer year) {
+                                          @RequestParam(required = false) @Min(1895) Integer year) { //см FilmReleaseDateValidator
         log.info("Начало обработки запроса на получение списка популярных фильмов");
         List<Film> mostPopularFilms = filmService.getMostPopularFilms(count, genreId, year);
         log.info("Окончание обработки запроса на получение списка популярных фильмов");
@@ -100,8 +101,8 @@ public class FilmController {
     }
 
     @GetMapping("/search")
-    public List<Film> searchFilms(@RequestParam @NotEmpty String query,
-                                  @RequestParam @NotEmpty String by) {
+    public List<Film> searchFilms(@RequestParam @NotBlank String query,
+                                  @RequestParam @NotBlank String by) {
         log.info("Начало обработки запроса по поиску фильмов по тексту: {} с признаком: {}", query, by);
         List<Film> films = filmService.searchFilms(query, by);
         log.info("Окончание обработки запроса по поиску фильмов по тексту: {} с признаком: {}", query, by);

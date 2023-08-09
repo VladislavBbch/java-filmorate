@@ -121,10 +121,9 @@ public class DatabaseGenreRepository implements GenreRepository {
                 Set<Genre> genres = film.getGenres();
                 if (genres == null) {
                     genres = new HashSet<>();
+                    film.setGenres(genres);
                 }
-                genres.add(
-                        new Genre(filmRow.getLong("GENRE_ID"), filmRow.getString("GENRE_NAME")));
-                film.setGenres(genres);
+                genres.add(new Genre(filmRow.getLong("GENRE_ID"), filmRow.getString("GENRE_NAME")));
             } while (filmRow.next());
 
             for (Film film : films) {

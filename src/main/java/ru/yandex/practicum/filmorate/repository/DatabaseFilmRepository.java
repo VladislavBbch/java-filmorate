@@ -96,10 +96,45 @@ public class DatabaseFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getMostPopularFilms(Integer count, Integer year) {
+    public List<Film> getMostPopularFilms(Integer count, Long genreId, Integer year) {
         List<Film> films = new ArrayList<>();
         SqlRowSet filmRow;
-        if (year != null) {
+        if (genreId != null & year != null) {
+            filmRow = parameterJdbcTemplate.queryForRowSet(
+                    "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, " +
+                            "R.NAME AS RATING_NAME, FG.GENRE_ID " +
+                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
+                            "      FROM LIKES " +
+                            "      GROUP BY FILM_ID) AS LIKES " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
+                            "JOIN FILMS_GENRES AS FG ON F.ID = FG.FILM_ID " +
+                            "WHERE EXTRACT(YEAR FROM F.RELEASE_DATE) = :year AND FG.GENRE_ID = :genreId " +
+                            "ORDER BY LIKES.LIKE_COUNT DESC " +
+                            "LIMIT :count",
+                    Map.ofEntries(
+                            entry("count", count),
+                            entry("year", year),
+                            entry("genreId", genreId)
+                    ));
+        } else if (genreId != null) {
+            filmRow = parameterJdbcTemplate.queryForRowSet(
+                    "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, " +
+                            "R.NAME AS RATING_NAME, FG.GENRE_ID " +
+                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
+                            "      FROM LIKES " +
+                            "      GROUP BY FILM_ID) AS LIKES " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
+                            "JOIN FILMS_GENRES AS FG ON F.ID = FG.FILM_ID " +
+                            "WHERE FG.GENRE_ID = :genreId " +
+                            "ORDER BY LIKES.LIKE_COUNT DESC " +
+                            "LIMIT :count",
+                    Map.ofEntries(
+                            entry("count", count),
+                            entry("genreId", genreId)
+                    ));
+        } else if (year != null) {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
                             "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
@@ -152,19 +187,19 @@ public class DatabaseFilmRepository implements FilmRepository {
     @Override
     public List<Film> getRecommendationFilmByUserIdForLike(Long userId) {
         final String SQL_QUERY_GET = "SELECT f.*, r.NAME AS RATING_NAME FROM " +
-                                     "(SELECT MATCH.*, l.FILM_ID FROM " +
-                                     "(SELECT count(FILM_ID) AS PRIORITY, USER_ID " +
-                                     "FROM LIKES " +
-                                     "WHERE FILM_ID IN (SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
-                                     "AND USER_ID <> :id " +
-                                     "GROUP BY USER_ID " +
-                                     "ORDER BY count(FILM_ID) DESC) AS MATCH " +
-                                     "JOIN LIKES AS l ON MATCH.USER_ID = l.USER_ID " +
-                                     "WHERE l.FILM_ID NOT IN " +
-                                     "(SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
-                                     "LIMIT 1) AS S " +
-                                     "JOIN FILMS f ON S.FILM_ID = f.ID " +
-                                     "LEFT JOIN RATINGS r ON f.RATING_ID = r.ID";
+                "(SELECT MATCH.*, l.FILM_ID FROM " +
+                "(SELECT count(FILM_ID) AS PRIORITY, USER_ID " +
+                "FROM LIKES " +
+                "WHERE FILM_ID IN (SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
+                "AND USER_ID <> :id " +
+                "GROUP BY USER_ID " +
+                "ORDER BY count(FILM_ID) DESC) AS MATCH " +
+                "JOIN LIKES AS l ON MATCH.USER_ID = l.USER_ID " +
+                "WHERE l.FILM_ID NOT IN " +
+                "(SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
+                "LIMIT 1) AS S " +
+                "JOIN FILMS f ON S.FILM_ID = f.ID " +
+                "LEFT JOIN RATINGS r ON f.RATING_ID = r.ID";
 
         List<Film> films = new ArrayList<>();
         SqlRowSet filmRow = parameterJdbcTemplate.queryForRowSet(SQL_QUERY_GET, Map.of("id", userId));
