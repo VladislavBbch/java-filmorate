@@ -114,14 +114,14 @@ public class DatabaseDirectorRepository implements DirectorRepository {
         } else {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID AS FILM_ID, F.NAME AS USER_NAME, F.DESCRIPTION, F.RATING_ID, " +
-                            "M.NAME AS RATING_NAME, F.RELEASE_DATE, F.DURATION, COUNT(FL.USER_ID) AS LIKES " +
+                            "M.NAME AS RATING_NAME, F.RELEASE_DATE, F.DURATION, AVG(FM.MARK) AS AVG_MARK " +
                             "FROM FILMS F " +
                             "LEFT JOIN RATINGS M ON M.ID = F.RATING_ID " +
                             "JOIN FILMS_DIRECTORS D ON F.ID = D.FILM_ID " +
-                            "LEFT JOIN LIKES FL ON F.ID = FL.FILM_ID " +
+                            "LEFT JOIN FILMS_MARKS FM ON F.ID = FM.FILM_ID " +
                             "WHERE D.DIRECTOR_ID = :id " +
                             "GROUP BY F.ID " +
-                            "ORDER BY LIKES DESC",
+                            "ORDER BY AVG_MARK DESC",
                     Map.of("id", directorId));
         }
         while (filmRow.next()) {
