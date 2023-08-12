@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.RatingMpa;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -103,14 +104,14 @@ public class DatabaseFilmRepository implements FilmRepository {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, " +
                             "R.NAME AS RATING_NAME, FG.GENRE_ID " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, AVG(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                             "JOIN FILMS_GENRES AS FG ON F.ID = FG.FILM_ID " +
                             "WHERE EXTRACT(YEAR FROM F.RELEASE_DATE) = :year AND FG.GENRE_ID = :genreId " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC " +
+                            "ORDER BY MARKS.AVG_MARK DESC " +
                             "LIMIT :count",
                     Map.ofEntries(
                             entry("count", count),
@@ -121,14 +122,14 @@ public class DatabaseFilmRepository implements FilmRepository {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, " +
                             "R.NAME AS RATING_NAME, FG.GENRE_ID " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, AVG(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                             "JOIN FILMS_GENRES AS FG ON F.ID = FG.FILM_ID " +
                             "WHERE FG.GENRE_ID = :genreId " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC " +
+                            "ORDER BY MARKS.AVG_MARK DESC " +
                             "LIMIT :count",
                     Map.ofEntries(
                             entry("count", count),
@@ -137,13 +138,13 @@ public class DatabaseFilmRepository implements FilmRepository {
         } else if (year != null) {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, AVG(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                             "WHERE EXTRACT(YEAR FROM F.RELEASE_DATE) = :year " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC " +
+                            "ORDER BY MARKS.AVG_MARK DESC " +
                             "LIMIT :count",
                     Map.ofEntries(
                             entry("count", count),
@@ -152,12 +153,12 @@ public class DatabaseFilmRepository implements FilmRepository {
         } else {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, AVG(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC " +
+                            "ORDER BY MARKS.AVG_MARK DESC " +
                             "LIMIT :count", Map.of("count", count));
         }
         while (filmRow.next()) {
@@ -173,9 +174,9 @@ public class DatabaseFilmRepository implements FilmRepository {
                 "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
                         "FROM FILMS AS F " +
                         "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
-                        "JOIN LIKES AS UL ON F.ID = UL.FILM_ID AND UL.USER_ID = :userId " +
-                        "JOIN LIKES AS FL ON F.ID = FL.FILM_ID AND FL.USER_ID = :friendId " +
-                        "JOIN (SELECT FILM_ID, COUNT(USER_ID) AS RATE FROM LIKES GROUP BY FILM_ID) " +
+                        "JOIN FILMS_MARKS AS UL ON F.ID = UL.FILM_ID AND UL.USER_ID = :userId " +
+                        "JOIN FILMS_MARKS AS FL ON F.ID = FL.FILM_ID AND FL.USER_ID = :friendId " +
+                        "JOIN (SELECT FILM_ID, AVG(MARK) AS RATE FROM FILMS_MARKS GROUP BY FILM_ID) " +
                         "AS R ON R.FILM_ID = F.ID " +
                         "ORDER BY RATE DESC", Map.of("userId", userId, "friendId", friendId));
         while (filmRow.next()) {
@@ -189,14 +190,14 @@ public class DatabaseFilmRepository implements FilmRepository {
         final String SQL_QUERY_GET = "SELECT f.*, r.NAME AS RATING_NAME FROM " +
                 "(SELECT MATCH.*, l.FILM_ID FROM " +
                 "(SELECT count(FILM_ID) AS PRIORITY, USER_ID " +
-                "FROM LIKES " +
-                "WHERE FILM_ID IN (SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
+                "FROM FILMS_MARKS " +
+                "WHERE FILM_ID IN (SELECT FILM_ID FROM FILMS_MARKS WHERE USER_ID = :id) " +
                 "AND USER_ID <> :id " +
                 "GROUP BY USER_ID " +
                 "ORDER BY count(FILM_ID) DESC) AS MATCH " +
-                "JOIN LIKES AS l ON MATCH.USER_ID = l.USER_ID " +
+                "JOIN FILMS_MARKS AS l ON MATCH.USER_ID = l.USER_ID " +
                 "WHERE l.FILM_ID NOT IN " +
-                "(SELECT FILM_ID FROM LIKES WHERE USER_ID = :id) " +
+                "(SELECT FILM_ID FROM FILMS_MARKS WHERE USER_ID = :id) " +
                 "LIMIT 1) AS S " +
                 "JOIN FILMS f ON S.FILM_ID = f.ID " +
                 "LEFT JOIN RATINGS r ON f.RATING_ID = r.ID";
@@ -211,46 +212,74 @@ public class DatabaseFilmRepository implements FilmRepository {
     }
 
     @Override
+    public Map<Long, Map<Long, Long>> getFilmsMarksByUsers() {
+        SqlRowSet resultRow = jdbcTemplate.queryForRowSet(
+                "SELECT USER_ID, FILM_ID, MARK " +
+                        "FROM FILMS_MARKS " +
+                        "ORDER BY USER_ID ");
+
+        Map<Long, Map<Long, Long>> result = new HashMap<>();
+        Map<Long, Long> userMarks = new HashMap<>();
+
+        if (resultRow.next()) {
+            long prevUserId = resultRow.getLong("USER_ID");
+
+            do {
+                long userId = resultRow.getLong("USER_ID");
+                if (prevUserId != userId) {
+                    result.put(prevUserId, userMarks);
+                    userMarks = new HashMap<>();
+                    prevUserId = userId;
+                }
+                userMarks.put(resultRow.getLong("FILM_ID"), resultRow.getLong("MARK"));
+            } while (resultRow.next());
+            result.put(prevUserId, userMarks);
+        }
+        return result;
+    }
+
+    @Override
     public List<Film> searchFilms(String query, Boolean byDirector, Boolean byTitle) {
         query = "%" + query + "%";
         List<Film> films = new ArrayList<>();
         SqlRowSet filmRow;
+        //TODO COUNT(MARK) -> AVG(MARK), из-за постман тестов
         if (byDirector && byTitle) {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, COUNT(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                             "LEFT JOIN FILMS_DIRECTORS FD on F.ID = FD.FILM_ID " + //LEFT на случай отсутствия режиссеров
                             "LEFT JOIN DIRECTORS D on FD.DIRECTOR_ID = D.ID " + //LEFT на случай отсутствия режиссеров
                             "WHERE LOWER(D.NAME) LIKE LOWER(:query) OR LOWER(F.NAME) LIKE LOWER(:query) " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC ",
+                            "ORDER BY MARKS.AVG_MARK DESC ",
                     Map.of("query", query));
         } else if (byDirector) {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, COUNT(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                             "JOIN FILMS_DIRECTORS FD on F.ID = FD.FILM_ID " +
                             "JOIN DIRECTORS D on FD.DIRECTOR_ID = D.ID " +
                             "WHERE LOWER(D.NAME) LIKE LOWER(:query) " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC ",
+                            "ORDER BY MARKS.AVG_MARK DESC ",
                     Map.of("query", query));
         } else {
             filmRow = parameterJdbcTemplate.queryForRowSet(
                     "SELECT F.ID, F.NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.RATING_ID, R.NAME AS RATING_NAME " +
-                            "FROM (SELECT FILM_ID, COUNT(*) AS LIKE_COUNT " +
-                            "      FROM LIKES " +
-                            "      GROUP BY FILM_ID) AS LIKES " +
-                            "RIGHT JOIN FILMS AS F ON F.ID = LIKES.FILM_ID " +
+                            "FROM (SELECT FILM_ID, COUNT(MARK) AS AVG_MARK " +
+                            "      FROM FILMS_MARKS " +
+                            "      GROUP BY FILM_ID) AS MARKS " +
+                            "RIGHT JOIN FILMS AS F ON F.ID = MARKS.FILM_ID " +
                             "JOIN RATINGS AS R ON F.RATING_ID = R.ID " +
                             "WHERE LOWER(F.NAME) LIKE LOWER(:query) " +
-                            "ORDER BY LIKES.LIKE_COUNT DESC ",
+                            "ORDER BY MARKS.AVG_MARK DESC ",
                     Map.of("query", query));
         }
         while (filmRow.next()) {

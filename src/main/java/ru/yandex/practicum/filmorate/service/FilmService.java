@@ -21,7 +21,7 @@ public class FilmService {
     private final UserRepository userRepository;
     private final RatingMpaRepository ratingMpaRepository;
     private final GenreRepository genreRepository;
-    private final LikeRepository likeRepository;
+    private final MarkRepository markRepository;
     private final DirectorRepository directorRepository;
     private final FeedRepository feedRepository;
 
@@ -68,17 +68,17 @@ public class FilmService {
         filmRepository.delete(filmId);
     }
 
-    public void addLike(Long filmId, Long userId) {
+    public void addMark(Long filmId, Long userId, Integer mark) {
         getFilmById(filmId);
         checkUser(userId);
-        likeRepository.addLike(filmId, userId);
+        markRepository.addMark(filmId, userId, mark);
         feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.ADD);
     }
 
-    public void deleteLike(Long filmId, Long userId) {
+    public void deleteMark(Long filmId, Long userId) {
         getFilmById(filmId);
         checkUser(userId);
-        likeRepository.deleteLike(filmId, userId);
+        markRepository.deleteMark(filmId, userId);
         feedRepository.createEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
     }
 
